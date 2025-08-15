@@ -1,8 +1,4 @@
-// ================== app.js (final) ==================
-// - Glass tabs (anti-flicker), uniform card size, white glow
-// - DASH/HLS + ClearKey
-// - Clock + Now Playing + Histats centered under the clock
-
+// ================== app.js (final; Histats top-left) ==================
 const CHANNELS_URL = 'channels.json';
 const TIMEZONE = 'Asia/Bangkok';
 jwplayer.key = 'XSuP4qMl+9tK17QNb+4+th2Pm9AWgMO/cYH8CI0HGGr7bdjo';
@@ -16,9 +12,8 @@ let scrollOnNextPlay = false;
 document.addEventListener('DOMContentLoaded', init);
 
 function init(){
-  /* ----- Clock ----- */
+  // ----- Clock -----
   const clockEl = document.getElementById('clock');
-
   function tick(){
     if(!clockEl) return;
     const now = new Date();
@@ -30,9 +25,8 @@ function init(){
   }
   if (clockEl){ tick(); setInterval(tick,1000); }
 
-  /* ----- Remove old subtitle & add Now Playing ----- */
+  // ----- Now Playing -----
   const subEl = document.querySelector('.sub'); if (subEl) subEl.remove();
-
   let nowPlayingEl = document.getElementById('now-playing');
   if (!nowPlayingEl && clockEl && clockEl.parentNode){
     nowPlayingEl = document.createElement('div');
@@ -50,17 +44,15 @@ function init(){
   }
   window.__setNowPlaying = setNowPlaying;
 
-  /* ----- Histats under the clock ----- */
-  mountHistats(clockEl);
+  // ----- Histats: มุมซ้ายบนสุด -----
+  mountHistatsTopLeft();
 
-  /* ----- Tabs / UI ----- */
-  enhanceTabButtons();
-  wireTabs();
-  centerTabsIfPossible();
+  // ----- Tabs -----
+  enhanceTabButtons(); wireTabs(); centerTabsIfPossible();
   window.addEventListener('resize', debounce(centerTabsIfPossible,150));
   window.addEventListener('load', centerTabsIfPossible);
 
-  /* ----- Load channels ----- */
+  // ----- Load channels -----
   fetch(CHANNELS_URL,{cache:'no-store'})
     .then(r=>r.json())
     .then(data=>{
@@ -138,10 +130,10 @@ function centerTabsIfPossible(){
   const canCenter = el.scrollWidth <= el.clientWidth + 1;
   el.classList.toggle('tabs--center', canCenter);
 }
-function debounce(fn, wait=150){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
+function debounce(fn,wait=150){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),wait)}}
 
 /* ---------- Filtering ---------- */
-function filterChannels(list, tab){
+function filterChannels(list,tab){
   if(tab==='ทั้งหมด') return list;
   return list.filter(ch => (ch.category || guessCategory(ch)) === tab);
 }
@@ -159,13 +151,11 @@ function render(){
   const wrap = document.getElementById('channel-list'); if(!wrap) return;
   const list = filterChannels(channels, currentFilter);
   wrap.innerHTML = '';
-
   list.forEach((ch) => {
     const btn = document.createElement('button');
     btn.className = 'channel';
     btn.title = ch.name || 'ช่อง';
     btn.dataset.globalIndex = String(channels.indexOf(ch));
-
     btn.innerHTML = `
       <div class="ch-card">
         <div class="logo-wrap">
@@ -175,136 +165,104 @@ function render(){
         </div>
         <div class="name">${escapeHtml(ch.name||'ช่อง')}</div>
       </div>`;
-
-    btn.addEventListener('click', (e) => {
-      makeRipple(e, btn.querySelector('.ch-card'));
-      scrollOnNextPlay = true;
-      playByChannel(ch);
-    });
-
+    btn.addEventListener('click',(e)=>{ makeRipple(e,btn.querySelector('.ch-card')); scrollOnNextPlay=true; playByChannel(ch); });
     wrap.appendChild(btn);
   });
-
   highlight(currentIndex);
 }
 
 /* ---------- Player ---------- */
-function playByChannel(ch){
-  const idx = channels.indexOf(ch);
-  if (idx >= 0) play(idx);
-}
-function play(i, opt={scroll:true}){
-  const ch = channels[i]; if(!ch) return;
-  currentIndex = i;
-
-  const player = jwplayer('player').setup({
-    playlist: [{ title: ch.name||'', image: ch.poster||ch.logo||undefined, sources: [buildSource(ch)] }],
+function playByChannel(ch){const idx=channels.indexOf(ch); if(idx>=0) play(idx);}
+function play(i,opt={scroll:true}){
+  const ch=channels[i]; if(!ch) return; currentIndex=i;
+  const player= jwplayer('player').setup({
+    playlist:[{title:ch.name||'', image:ch.poster||ch.logo||undefined, sources:[buildSource(ch)]}],
     width:'100%', aspectratio:'16:9', autostart:true,
     mute:/iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
     preload:'metadata', playbackRateControls:true
   });
-
-  player.once('playAttemptFailed',()=>{ player.setMute(true); player.play(true); });
-  player.on('error', e => console.warn('Player error:', e));
-
-  window.__setNowPlaying?.(ch.name || '');
+  player.once('playAttemptFailed',()=>{player.setMute(true);player.play(true);});
+  player.on('error',e=>console.warn('Player error:',e));
+  window.__setNowPlaying?.(ch.name||'');
   highlight(i);
-  try{ localStorage.setItem('lastIndex', String(i)); }catch{}
-
-  if ((opt.scroll ?? true) && scrollOnNextPlay) { scrollToPlayer(); scrollOnNextPlay = false; }
+  try{localStorage.setItem('lastIndex',String(i));}catch{}
+  if((opt.scroll??true)&&scrollOnNextPlay){scrollToPlayer();scrollOnNextPlay=false;}
 }
 
-/* ---------- JW Source Helpers ---------- */
+/* ---------- JW source helpers ---------- */
 function buildSource(ch){
-  const url = buildUrlWithProxyIfNeeded(ch);
-  const t = (ch.type || detectType(url) || 'auto').toLowerCase();
-  const src = { file:url };
-  if (t==='dash'){
+  const url=buildUrlWithProxyIfNeeded(ch);
+  const t=(ch.type||detectType(url)||'auto').toLowerCase();
+  const src={file:url};
+  if(t==='dash'){
     src.type='dash';
-    const ck = ch.drm?.clearkey || (ch.keyId && ch.key ? {keyId:ch.keyId, key:ch.key} : null);
-    if (ck?.keyId && ck?.key) src.drm = { clearkey:{ keyId:ck.keyId, key:ck.key } };
-  } else if (t==='hls'){ src.type='hls'; }
+    const ck=ch.drm?.clearkey||(ch.keyId&&ch.key?{keyId:ch.keyId,key:ch.key}:null);
+    if(ck?.keyId&&ck?.key) src.drm={clearkey:{keyId:ck.keyId,key:ck.key}};
+  }else if(t==='hls'){src.type='hls'}
   return src;
 }
-function detectType(u){
-  const p=(u||'').split('?')[0].toLowerCase();
-  if(p.endsWith('.m3u8')) return 'hls';
-  if(p.endsWith('.mpd'))  return 'dash';
-  return 'auto';
-}
+function detectType(u){const p=(u||'').split('?')[0].toLowerCase(); if(p.endsWith('.m3u8'))return'hls'; if(p.endsWith('.mpd'))return'dash'; return'auto';}
 function buildUrlWithProxyIfNeeded(ch){
-  const raw = ch.src || ch.file || '';
-  if (window.PROXY_BASE && ch.proxy){
-    const payload = { src: raw, referrer: ch.referrer||'', ua: ch.ua||'', headers: ch.headers||{} };
-    const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  const raw=ch.src||ch.file||'';
+  if(window.PROXY_BASE&&ch.proxy){
+    const payload={src:raw,referrer:ch.referrer||'',ua:ch.ua||'',headers:ch.headers||{}};
+    const b64=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
     return `${window.PROXY_BASE}/p/${b64}`;
   }
   return raw;
 }
 
 /* ---------- UI helpers ---------- */
-function makeRipple(event, container){
+function makeRipple(event,container){
   if(!container) return;
-  const rect = container.getBoundingClientRect();
-  const max = Math.max(rect.width, rect.height);
-  const ripple = document.createElement('span');
-  ripple.className = 'ripple';
-  ripple.style.width = ripple.style.height = `${max}px`;
-  ripple.style.left = `${event.clientX - rect.left - max/2}px`;
-  ripple.style.top  = `${event.clientY - rect.top  - max/2}px`;
-  const old = container.querySelector('.ripple'); if(old) old.remove();
-  container.appendChild(ripple);
-  ripple.addEventListener('animationend', ()=>ripple.remove(), { once:true });
+  const r=container.getBoundingClientRect(); const max=Math.max(r.width,r.height);
+  const ripple=document.createElement('span'); ripple.className='ripple';
+  ripple.style.width=ripple.style.height=`${max}px`;
+  ripple.style.left=`${event.clientX-r.left-max/2}px`; ripple.style.top=`${event.clientY-r.top-max/2}px`;
+  const old=container.querySelector('.ripple'); if(old) old.remove();
+  container.appendChild(ripple); ripple.addEventListener('animationend',()=>ripple.remove(),{once:true});
 }
 function scrollToPlayer(){
-  const el = document.getElementById('player');
-  const header = document.querySelector('header');
-  const y = el.getBoundingClientRect().top + window.pageYOffset - ((header?.offsetHeight)||0) - 8;
-  window.scrollTo({ top:y, behavior:'smooth' });
+  const el=document.getElementById('player'); const header=document.querySelector('header');
+  const y=el.getBoundingClientRect().top+window.pageYOffset-((header?.offsetHeight)||0)-8;
+  window.scrollTo({top:y,behavior:'smooth'});
 }
 function highlight(globalIndex){
   document.querySelectorAll('.channel').forEach(el=>{
-    const idx = Number(el.dataset.globalIndex);
-    el.classList.toggle('active', idx === globalIndex);
-    el.setAttribute('aria-pressed', idx === globalIndex ? 'true':'false');
+    const idx=Number(el.dataset.globalIndex);
+    el.classList.toggle('active',idx===globalIndex);
+    el.setAttribute('aria-pressed',idx===globalIndex?'true':'false');
   });
 }
-function escapeHtml(s){
-  return String(s).replace(/[&<>"'`=\/]/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;'
-  }[c]));
-}
+function escapeHtml(s){return String(s).replace(/[&<>"'`=\/]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;'}[c]));}
 
-/* ---------- Histats embed (under the clock) ---------- */
-function mountHistats(clockEl){
-  // wrapper directly under now-playing (or under clock if now-playing missing)
-  const anchor = document.getElementById('now-playing') || clockEl || document.body;
-  const wrap = document.createElement('div');
-  wrap.id = 'histats-wrap';
-  wrap.innerHTML = '<div id="histats_counter" aria-hidden="true"></div>';
-  anchor?.after(wrap);
+/* ---------- Histats (Top-left fixed) ---------- */
+function mountHistatsTopLeft(){
+  // placeholder ติดมุมซ้ายบน
+  if(!document.getElementById('histats_counter')){
+    const d=document.createElement('div'); d.id='histats_counter'; document.body.appendChild(d);
+  }
 
-  // set up Histats (force static positioning so it stays inside wrapper)
+  // ตั้งค่าตามสคริปต์ที่ให้มา
   window._Hasync = window._Hasync || [];
   window._Hasync.push([
     'Histats.startgif',
-    '1,4970267,4,10045,"div#histatsC{position:static!important;} body>div#histatsC{position:static!important;}"'
+    '1,4970267,4,10005,"div#histatsC {position: absolute;top:0px;left:0px;}body>div#histatsC {position: fixed;}"'
   ]);
   window._Hasync.push(['Histats.fasi','1']);
   window._Hasync.push(['Histats.track_hits','']);
 
-  const hs = document.createElement('script');
-  hs.type = 'text/javascript';
-  hs.async = true;
-  hs.src = '//s10.histats.com/js15_gif_as.js';
-  (document.head || document.body).appendChild(hs);
+  const hs=document.createElement('script');
+  hs.type='text/javascript'; hs.async=true;
+  hs.src='//s10.histats.com/js15_giftop_as.js';
+  (document.head||document.body).appendChild(hs);
 
-  // Move generated #histatsC into our placeholder once available
-  const moveIntoPlaceholder = () => {
-    const c = document.getElementById('histatsC');
-    const target = document.getElementById('histats_counter');
-    if (c && target && !target.contains(c)) { target.appendChild(c); return; }
-    requestAnimationFrame(moveIntoPlaceholder);
+  // ย้ายกล่องที่สคริปต์สร้าง (#histatsC) เข้ามาไว้ใน placeholder ของเรา
+  const move = () => {
+    const c=document.getElementById('histatsC');
+    const target=document.getElementById('histats_counter');
+    if(c && target && !target.contains(c)){ target.appendChild(c); return; }
+    requestAnimationFrame(move);
   };
-  moveIntoPlaceholder();
+  move();
 }
