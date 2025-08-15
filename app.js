@@ -24,6 +24,30 @@ function tick(){
 }
 tick(); setInterval(tick,1000);
 
+// ===== Now Playing (สร้าง element ใต้เวลา + ลบข้อความเดิม) =====
+let nowPlayingEl = document.getElementById('now-playing');
+// ลบข้อความ "อัปเดตอัตโนมัติ ..." ถ้ามีใน DOM (กัน FOUC ด้วย CSS แล้ว)
+const subEl = document.querySelector('.sub'); if (subEl) subEl.remove();
+// ถ้ายังไม่มี element แสดงชื่อช่อง ให้สร้างและใส่ไว้หลังนาฬิกา
+if (!nowPlayingEl) {
+  nowPlayingEl = document.createElement('div');
+  nowPlayingEl.id = 'now-playing';
+  nowPlayingEl.className = 'now-playing';
+  nowPlayingEl.setAttribute('aria-live', 'polite');
+  nowPlayingEl.textContent = ''; // เริ่มว่าง
+  if (clockEl && clockEl.parentNode) clockEl.after(nowPlayingEl);
+}
+function setNowPlaying(name){
+  const text = name || '';
+  if (nowPlayingEl) {
+    nowPlayingEl.textContent = text;
+    nowPlayingEl.title = text;
+    // รีสตาร์ทแอนิเมชันเฟด
+    nowPlayingEl.classList.remove('swap'); void nowPlayingEl.offsetWidth;
+    nowPlayingEl.classList.add('swap');
+  }
+}
+
 // ===== Load channels =====
 fetch(CHANNELS_URL,{cache:'no-store'})
   .then(r=>r.json())
@@ -31,11 +55,12 @@ fetch(CHANNELS_URL,{cache:'no-store'})
     channels = Array.isArray(data) ? data : (data.channels || []);
 
     wireTabs();
-    centerTabsIfPossible();      // <- จัดกึ่งกลางถ้ากว้างพอ
+    centerTabsIfPossible();
     render();
 
     const start = Math.max(0, Math.min(channels.length-1, parseInt(localStorage.getItem('lastIndex')||'0',10)));
     if (channels.length) play(start,{scroll:false}); // ครั้งแรกไม่เลื่อน
+    else setNowPlaying(''); // ไม่มีช่อง
   })
   .catch(e=>{
     console.error('โหลด channels.json ไม่สำเร็จ:', e);
@@ -80,7 +105,7 @@ function setActiveTab(name){
 
   // re-render with fade-in
   const grid = document.getElementById('channel-list');
-  grid.classList.remove('fade-in'); void grid.offsetWidth; // รีสตาร์ทแอนิเมชัน
+  grid.classList.remove('fade-in'); void grid.offsetWidth;
   render();
   grid.classList.add('fade-in');
 }
@@ -89,7 +114,7 @@ function setActiveTab(name){
 function centerTabsIfPossible(){
   const el = document.getElementById('tabs');
   if (!el) return;
-  const canCenter = el.scrollWidth <= el.clientWidth + 1; // กัน float rounding
+  const canCenter = el.scrollWidth <= el.clientWidth + 1;
   el.classList.toggle('tabs--center', canCenter);
 }
 function debounce(fn, wait=150){
@@ -103,10 +128,8 @@ function filterChannels(list, tab){
   if(tab==='ทั้งหมด') return list;
   return list.filter(ch => (ch.category || guessCategory(ch)) === tab);
 }
-
 function guessCategory(ch){
   const s = (ch.name||'').toLowerCase();
-
   if (/(ข่าว|tnn|nation|thairath|thairat|nbt|pbs|jkn|spring|voice)/.test(s)) return 'ข่าว';
   if (/(sport|กีฬา|t\s?sports|3bb\s?sports|bein|true\s?sport|pptv\s?hd\s?36)/.test(s)) return 'กีฬา';
   if (/(สารคดี|discovery|animal|nat.?geo|history|documentary|bbc earth|cgnc)/.test(s)) return 'สารคดี';
@@ -136,7 +159,6 @@ function render(){
         <div class="name">${escapeHtml(ch.name||'ช่อง')}</div>
       </div>`;
 
-    // ripple + เล่น + เลื่อนขึ้นไปยังตัวเล่น
     btn.addEventListener('click', (e) => {
       makeRipple(e, btn.querySelector('.card'));
       scrollOnNextPlay = true;
@@ -154,7 +176,6 @@ function playByChannel(ch){
   const idx = channels.indexOf(ch);
   if (idx >= 0) play(idx);
 }
-
 function play(i, opt={scroll:true}){
   const ch = channels[i]; if(!ch) return;
   currentIndex = i;
@@ -169,6 +190,9 @@ function play(i, opt={scroll:true}){
 
   player.once('playAttemptFailed',()=>{ player.setMute(true); player.play(true); });
   player.on('error', e => console.warn('Player error:', e));
+
+  // อัปเดตชื่อช่องที่กำลังเล่น
+  setNowPlaying(ch.name || '');
 
   highlight(i);
   try{ localStorage.setItem('lastIndex', String(i)); }catch{}
