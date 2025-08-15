@@ -44,9 +44,9 @@ header{
 
 /* === Histats: ด้านขวาบน ภายใน header === */
 #histats_counter{
-  position:absolute; top:6px; right:6px; z-index:30;
+  position:absolute; top:4px; right:6px; z-index:30;
   line-height:0; pointer-events:auto;
-  transform:scale(.9); transform-origin:top right;   /* ย่อเล็กน้อยให้ไม่ชนขอบ */
+  transform:scale(.82); transform-origin:top right;   /* ย่อเล็กน้อยให้ไม่ชนขอบ */
 }
 #histats_counter #histatsC{ position:static !important }
 #histats_counter img{ opacity:.9; filter:drop-shadow(0 1px 2px rgba(0,0,0,.45)) }
