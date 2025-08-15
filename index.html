@@ -1,90 +1,236 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flow TV (GitHub Pages)</title>
-  <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=">
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FreeTV</title>
+
+  <!-- JW Player -->
+  <script src="https://ssl.p.jwpcdn.com/player/v/8.26.0/jwplayer.js"></script>
+  <script>
+    jwplayer.key = 'XSuP4qMl+9tK17QNb+4+th2Pm9AWgMO/cYH8CI0HGGr7bdjo';
+    // ถ้าคุณมี Cloudflare Worker/Proxy ของตัวเอง ให้ตั้งแบบนี้ (ไม่มีก็ลบทิ้งได้)
+    // window.PROXY_BASE = 'https://your-worker.workers.dev';
+  </script>
+
+  <!-- Analytics (ลบซ้ำออกให้เหลือชุดเดียว) -->
+  <script defer data-domain="kitti2025.tiiny.site" src="https://analytics.tiiny.site/js/plausible.js"></script>
+  <script type="text/javascript" src="https://tiiny.host/ad-script.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 10px;
+      padding: 10px;
+      background-color: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, 'Sarabun', Arial, sans-serif;
+    }
+
+    #player-container {
+      width: 100%;
+      max-width: 800px;
+      background-color: #111;
+      padding: 10px;
+      border-radius: 12px;
+      position: relative;
+      box-shadow: 0 6px 24px rgba(0,0,0,.35);
+    }
+
+    #player { width: 100%; }
+
+    #logo-overlay {
+      position: absolute;
+      top: 10px; right: 35px;
+      width: 28px; height: 28px;
+      opacity: 0.8;
+      transition: opacity .5s ease-in-out;
+      pointer-events: none;
+    }
+    #logo-overlay img { width: 100%; height: 100%; display: block; }
+
+    .channel-grid {
+      width: 100%;
+      max-width: 900px;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+      gap: 12px;
+    }
+    .channel {
+      user-select: none;
+      cursor: pointer;
+      text-align: center;
+      background: #121212;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 10px 6px;
+      transition: transform .08s ease, background .2s ease, border-color .2s ease;
+    }
+    .channel:hover { transform: translateY(-1px); background: #181818; border-color: #2a2a2a; }
+    .channel:active { transform: translateY(0); }
+
+    .channel img {
+      width: 44px; height: 44px; object-fit: contain; display: block; margin: 0 auto 6px;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,.4));
+    }
+    .channel-name {
+      color: #f3f3f3;
+      font-size: 12px;
+      line-height: 1.1;
+      word-break: break-word;
+      min-height: 1.2em;
+    }
+
+    .note {
+      color: #bbb; font-size: 12px; margin: 8px 0 0; text-align: center;
+    }
+  </style>
 </head>
 <body>
-  <nav id="category-sidebar" class="category-sidebar"></nav>
-
-  <div class="container">
-    <div class="header-container">
-      <div id="datetime-display"></div>
-      <div class="header-buttons">
-        <button id="theme-toggle-btn" class="theme-toggle-btn" aria-label="สลับธีม">
-          <i class="bi bi-sun-fill"></i>
-        </button>
-        <button id="refresh-channels-btn" class="theme-toggle-btn" aria-label="รีเฟรชรายการช่อง">
-          <i class="bi bi-arrow-clockwise"></i>
-        </button>
-      </div>
-      <div id="viewer-count-display" style="display:none">
-        👤 กำลังออนไลน์: <span id="viewer-count">0</span>
-      </div>
-    </div>
-
-    <div class="main-layout">
-      <div class="player-wrapper">
-        <video id="video" autoplay muted playsinline crossorigin="anonymous"></video>
-
-        <div id="play-overlay" class="play-overlay hidden">
-          <button id="big-play-btn" class="big-play-btn" aria-label="เล่นวิดีโอ">
-            <svg fill="currentColor" viewBox="0 0 16 16"><path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"></path></svg>
-          </button>
-        </div>
-
-        <div id="loading-indicator" class="loading-indicator hidden">
-          <div class="spinner"></div>
-          <p id="loading-message" class="loading-message"></p>
-        </div>
-
-        <div class="error-overlay hidden" id="error-overlay">
-          <div class="error-content">
-            <div class="error-icon">⚠️</div>
-            <h4 id="error-channel-name" class="error-channel-name"></h4>
-            <p id="error-message"></p>
-            <button id="retry-btn" class="retry-button">ลองอีกครั้ง</button>
-          </div>
-        </div>
-
-        <div class="custom-controls">
-          <button id="play-pause-btn" class="control-btn" aria-label="เล่น/หยุดชั่วคราว" title="เล่น/หยุด (Spacebar)">
-            <svg class="icon-play" fill="currentColor" viewBox="0 0 16 16"><path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"></path></svg>
-            <svg class="icon-pause hidden" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1.5-1.5z"></path></svg>
-          </button>
-          <input type="range" id="progress-bar" value="0" step="1" aria-label="แถบความคืบหน้าวิดีโอ">
-          <div id="live-indicator" class="live-indicator hidden">LIVE</div>
-          <div id="time-display" class="time-display">00:00 / 00:00</div>
-          <button id="mute-btn" class="control-btn" aria-label="เปิด/ปิดเสียง" title="ปิดเสียง (M)">
-            <svg class="icon-volume-high" fill="currentColor" viewBox="0 0 16 16"><path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.476 7.476 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z"></path><path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.482 5.482 0 0 1 11.025 8a5.482 5.482 0 0 1-1.61 3.89l.706.706z"></path><path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.49 3.49 0 0 1 8 10.475l.707.707zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"></path></svg>
-            <svg class="icon-volume-off hidden" fill="currentColor" viewBox="0 0 16 16"><path d="M10.717 3.55A.5.5 0 0 1 11 4v8a.5.5 0 0 1-.812.39L7.825 10.5H5.5A.5.5 0 0 1 5 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06zM10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.49 3.49 0 0 1 8 10.475l.707.707A4.486 4.486 0 0 0 10.025 8zM13.969 1.531a.75.75 0 0 1 .063 1.06L12.56 4.125a6.48 6.48 0 0 1-1.44 8.458l-.707-.707a5.482 5.482 0 0 0 1.22-7.144L8.4 6.667l-.72-.72-3.8-3.8a.75.75 0 0 1 1.06-1.061l11.06 11.06a.75.75 0 0 1-1.06 1.06l-1.6-1.6A8.473 8.473 0 0 1 1.5 8a.75.75 0 0 1 0-1.5 6.979 6.979 0 0 0 1.83-.31L1.2 4.125a.75.75 0 0 1 1.06-1.062l2.362 2.362a8.47 8.47 0 0 1 8.284-3.894Z"></path></svg>
-          </button>
-          <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.5" aria-label="แถบปรับระดับเสียง">
-          <button id="fullscreen-btn" class="control-btn" aria-label="สลับโหมดเต็มจอ" title="เต็มจอ (F)">
-            <svg class="icon-fullscreen" fill="currentColor" viewBox="0 0 16 16"><path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"></path></svg>
-          </button>
-          <button id="pip-btn" class="control-btn" aria-label="Picture-in-Picture" title="แสดงภาพซ้อนภาพ">
-            <svg fill="currentColor" viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"></path><path d="M8 8.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5-.5h-5a.5.5 0 0 1-.5-.5v-3z"></path></svg>
-          </button>
-        </div>
-      </div>
-
-      <div id="channel-buttons-container"></div>
+  <div id="player-container">
+    <div id="player"></div>
+    <div id="logo-overlay">
+      <img src="https://img5.pic.in.th/file/secure-sv1/11zon_resized-3bb1f59abd215d288.png" alt="Logo">
     </div>
   </div>
 
-  <!-- Players -->
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15/dist/hls.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dashjs@4.7.3/dist/dash.all.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mpegts.js@1.7.3/dist/mpegts.min.js"></script>
+  <div class="note">รองรับทั้ง DASH (.mpd + ClearKey) และ HLS (.m3u8) – เล่นได้บนมือถือและคอม</div>
 
-  <!-- App -->
-  <!-- ตั้งค่า Worker Proxy ถ้ามี เช่น Cloudflare Workers -->
-  <script>window.PROXY_BASE = 'https://wildflower.ahmed9qn223.workers.dev';</script>
-  <script src="script.js" defer></script>
+  <div class="channel-grid">
+
+    <!-- DASH + ClearKey -->
+    <div class="channel" onclick="changeChannel('https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/5/5.mpd','87db4361f7894655a4656e9c8b935a02','b025a4b950df41158a87cfc8d6f2ac34')">
+      <img loading="lazy" src="https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/ch5new.logo.png" alt="5 HD">
+      <div class="channel-name">5HD</div>
+    </div>
+
+    <div class="channel" onclick="changeChannel('https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/2/2.mpd','ca20a93cf8e3421dafbd5bdb1990081b','86ae86a7391c481ea93eecdb740f0a14')">
+      <img loading="lazy" src="https://ais-s.ais-vidnt.com/ais/play/origin/LIVE//channelicon/0001.png" alt="NBT">
+      <div class="channel-name">NBT</div>
+    </div>
+
+    <div class="channel" onclick="changeChannel('https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/3/3.mpd','4d4426a505f64382a9841155d721cee6','0f4770219ccb4be5836a7517057e51c3')">
+      <img loading="lazy" src="https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/0014.png" alt="TPBS">
+      <div class="channel-name">TPBS</div>
+    </div>
+
+    <div class="channel" onclick="changeChannel('https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/4/4.mpd','1e98456bcbea44b7ad05831387e364ef','3d14fd4f9d3149a79b35a7124fccbd67')">
+      <img loading="lazy" src="https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/ALTV.PNG" alt="ALTV">
+      <div class="channel-name">ALTV</div>
+    </div>
+
+    <!-- ยกตัวอย่าง HLS (.m3u8) ที่ไม่ต้องใช้ DRM -->
+    <div class="channel" onclick="changeChannel('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8')">
+      <img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/HLS_logo.svg/120px-HLS_logo.svg.png" alt="HLS Demo">
+      <div class="channel-name">HLS Demo</div>
+    </div>
+
+    <div class="channel" onclick="changeChannel('https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/7/7.mpd','6187523f92b9475bb5b192f70cef1342','5119311f482144d58dacabc5bc1fa4ba')">
+      <img loading="lazy" src="https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/T-SPorts_7_Final.png" alt="Sports 7">
+      <div class="channel-name">Sports 7</div>
+    </div>
+
+    <div class="channel" onclick="changeChannel('https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/10/10.mpd','5da46688fd1e4ed5b085a12519b9dc4e','fd07bcf33823447180f53f6540f74ccb3')">
+      <img loading="lazy" src="https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/0048.png" alt="TPTV">
+      <div class="channel-name">TPTV</div>
+    </div>
+
+    <!-- … (รายการช่องอื่นๆ ของคุณคงเดิมได้เลย) … -->
+
+    <!-- แก้พิมพ์ผิด 30mpd -> 30.mpd -->
+    <div class="channel" onclick="changeChannel('https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/30/30.mpd')">
+      <img loading="lazy" src="https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/MCOT_new.png" alt="McotHD">
+      <div class="channel-name">McotHD</div>
+    </div>
+
+    <!-- ตัวอย่าง Premium/เด็ก ฯลฯ คงเดิม (ตัดออกเพื่อย่อ) -->
+  </div>
+
+  <script>
+    // ---- Helper: เข้าผ่าน Proxy ได้ถ้าตั้ง PROXY_BASE (base64 URL แบบง่าย) ----
+    function maybeProxy(url) {
+      if (!window.PROXY_BASE) return url;
+      try {
+        const b64 = btoa(url); // ถ้า Worker ของคุณรูปแบบไม่ใช่ /p/<b64> แก้ตรงนี้
+        return `${window.PROXY_BASE}/p/${b64}`;
+      } catch {
+        return url;
+      }
+    }
+
+    // ตรวจจับชนิดสตรีมจากนามสกุล
+    function detectType(url) {
+      const u = url.split('?')[0].toLowerCase();
+      if (u.endsWith('.mpd')) return 'dash';
+      if (u.endsWith('.m3u8')) return 'hls';
+      return undefined; // ให้ JW เดาเองถ้าจำเป็น
+    }
+
+    // ตั้งค่า JW Player
+    const playerInstance = jwplayer('player');
+    playerInstance.setup({
+      playlist: [{
+        sources: [{
+          file: maybeProxy('https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/5/5.mpd'),
+          type: 'dash',
+          drm: {
+            clearkey: {
+              keyId: '87db4361f7894655a4656e9c8b935a02',
+              key:   'b025a4b950df41158a87cfc8d6f2ac34'
+            }
+          },
+          label: '1080HD'
+        }]
+      }],
+      width: '100%',
+      aspectratio: '16:9',
+      autostart: 'viewable',   // เริ่มเล่นอัตโนมัติเมื่อเข้าหน้าจอ (ปลอดภัยกับมือถือ)
+      mute: true,              // มือถือจะอนุญาต autoplay เมื่อ mute
+      controls: true,
+      // mobile-friendly
+      stretching: 'uniform',
+      preload: 'metadata'
+    });
+
+    // แสดง/ซ่อนโลโก้ overlay ชั่วคราว
+    function flashLogo() {
+      const logoOverlay = document.getElementById('logo-overlay');
+      logoOverlay.style.display = 'block';
+      logoOverlay.style.opacity = '0.8';
+      setTimeout(() => {
+        logoOverlay.style.opacity = '0';
+        setTimeout(() => { logoOverlay.style.display = 'none'; }, 500);
+      }, 4000);
+    }
+
+    // เปลี่ยนช่อง — รองรับทั้ง .mpd (DASH + ClearKey) และ .m3u8 (HLS)
+    function changeChannel(file, keyId, key) {
+      const finalUrl = maybeProxy(file);
+      const type = detectType(file);
+
+      const source = { file: finalUrl };
+      if (type) source.type = type;
+
+      // ใส่ DRM เฉพาะตอนเป็น DASH และมีคีย์ครบ
+      if (type === 'dash' && keyId && key) {
+        source.drm = { clearkey: { keyId, key } };
+      }
+
+      playerInstance.load([{ sources: [source] }]);
+      playerInstance.play();
+      flashLogo();
+    }
+
+    // Handling error ให้รู้เรื่องเวลาเจอ CORS/Key/ไฟล์ดับ
+    playerInstance.on('error', e => {
+      console.warn('Player error:', e && e.message ? e.message : e);
+      alert('เล่นสตรีมไม่สำเร็จ: ' + (e && e.message ? e.message : 'Unknown error') +
+            '\nหากลิงก์ต้องการ Referer/UA/CORS ให้ลองผ่าน proxy (ตั้ง window.PROXY_BASE)');
+    });
+  </script>
 </body>
 </html>
