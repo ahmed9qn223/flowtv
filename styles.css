@@ -52,9 +52,9 @@ header{
 /* ================= GLASSMORPHISM TABS ================= */
 .tabs{
   position: relative;
-  display:flex; gap:12px; align-items:center;
+  display:flex; gap:10px; align-items:center;
   overflow-x:auto; -webkit-overflow-scrolling:touch;
-  padding:14px 10px; margin:10px 0 6px;
+  padding:12px 10px; margin:10px 0 8px;
   scrollbar-gutter:stable both-edges;
   justify-content:flex-start;                /* scrollable when overflow */
   scroll-snap-type:x proximity;
@@ -65,16 +65,13 @@ header{
 
 /* soft blurred gradient strip behind tabs */
 .tabs::before{
-  content:"";
-  position:absolute; inset:0;
+  content:""; position:absolute; inset:0;
   background:
-    radial-gradient(120% 80% at 10% 0%, rgba(99,102,241,.25) 0%, transparent 45%),
-    radial-gradient(120% 80% at 90% 100%, rgba(168,85,247,.25) 0%, transparent 45%),
+    radial-gradient(120% 80% at 10% 0%, rgba(99,102,241,.22) 0%, transparent 45%),
+    radial-gradient(120% 80% at 90% 100%, rgba(168,85,247,.22) 0%, transparent 45%),
     linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.0));
-  filter: blur(22px);
-  opacity: .8;
-  pointer-events:none;
-  z-index:-1;
+  filter: blur(20px);
+  opacity: .8; pointer-events:none; z-index:-1;
 }
 
 /* center when they fit */
@@ -88,65 +85,62 @@ header{
   scroll-snap-align:center;
 }
 
-/* Glass tile */
+/* Glass tile (ขนาดเล็กลง + ป้องกันกระพริบ) */
 .tab-card{
-  width: clamp(92px, 16vw, 120px);
-  height: clamp(82px, 15vw, 106px);
-  border-radius:16px;
-  display:grid; grid-template-rows:auto auto; justify-items:center; align-content:center; gap:8px;
+  width: clamp(86px, 14vw, 104px);
+  height: clamp(74px, 12.5vw, 90px);
+  border-radius:14px;
+  display:grid; grid-template-rows:auto auto; justify-items:center; align-content:center; gap:6px;
 
   /* glassmorphism */
   background: rgba(255,255,255,.08);
   border: 1px solid rgba(255,255,255,.18);
-  box-shadow:
-    0 0 0 .5px rgba(255,255,255,.25) inset,
-    0 6px 18px rgba(0,0,0,.28);
-  backdrop-filter: blur(10px) saturate(1.15);
-  -webkit-backdrop-filter: blur(10px) saturate(1.15);
+  box-shadow: 0 0 0 .5px rgba(255,255,255,.22) inset, 0 6px 16px rgba(0,0,0,.26);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
 
   color:#fff;
   transform: translateZ(0) scale(1);
-  transition: transform .16s ease, box-shadow .22s ease, filter .18s ease, border-color .2s ease;
+  backface-visibility:hidden;
+  will-change: transform, box-shadow;
+  transition: transform .16s ease, box-shadow .22s ease, border-color .2s ease;
 }
-.tab:hover .tab-card{ filter:brightness(1.08) }
+/* ไม่ใช้ filter:brightness() เพื่อเลี่ยง "แสงกระพริบ" */
+.tab:hover .tab-card{ border-color:rgba(255,255,255,.26); box-shadow:0 0 0 .5px rgba(255,255,255,.26) inset, 0 8px 18px rgba(0,0,0,.3) }
 .tab:active .tab-card{ transform:scale(.985) }
 
 /* Focus ring */
 .tab:focus-visible .tab-card{
-  box-shadow:
-    0 0 0 2px rgba(255,255,255,.9),
-    0 10px 24px rgba(0,0,0,.35);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 10px 22px rgba(0,0,0,.34);
 }
 
-/* Selected tile (pop) */
+/* Selected tile (pop นิดเดียวเพื่อไม่สั่น) */
 .tab[aria-selected="true"] .tab-card{
-  transform:scale(1.04);
-  border-color: rgba(255,255,255,.35);
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,.35) inset,
-    0 12px 28px rgba(0,0,0,.38);
+  transform:scale(1.03);
+  border-color: rgba(255,255,255,.34);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.34) inset, 0 12px 24px rgba(0,0,0,.36);
 }
 
 /* Icon + Label */
-.tab-icon svg{ width:28px; height:28px; display:block; color:#fff }
-.tab-label{ font-weight:700; font-size:12px; letter-spacing:.2px }
+.tab-icon svg{ width:26px; height:26px; display:block; color:#fff }
+.tab-label{ font-weight:700; font-size:11.5px; letter-spacing:.2px }
 
-/* Vibrant accent underline on selected */
+/* Vibrant accent underline on selected (เสถียรขึ้น) */
 .tab{ --accent:#ffffff } /* fallback; overridden per category */
 .tab::after{
-  content:"";
-  position:absolute; left:50%; bottom:-2px;
+  content:""; position:absolute; left:50%; bottom:-2px;
   width:56%; height:3px; border-radius:3px;
   background: var(--accent);
-  box-shadow: 0 2px 12px color-mix(in srgb, var(--accent) 65%, transparent);
-  transform: translateX(-50%) scaleX(0);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--accent) 60%, transparent);
+  transform: translate3d(-50%,0,0) scaleX(0);
   transform-origin:center;
   opacity:0;
+  will-change: transform, opacity;
   transition: transform .22s ease, opacity .22s ease, width .22s ease;
   pointer-events:none;
 }
 .tab[aria-selected="true"]::after{
-  transform: translateX(-50%) scaleX(1);
+  transform: translate3d(-50%,0,0) scaleX(1);
   opacity:1;
 }
 
