@@ -1,7 +1,7 @@
 /* Flow TV Hybrid Presence v3.6 (Durable Object backend) */
 (function(){
   // Set this to your Worker URL:
-  const WORKER_BASE = "https://wildflower.ahmed9qn223.workers.dev/";
+  const WORKER_BASE = "https://wildflower.ahmed9qn223.workers.dev";
   const VIEWER_TTL_SECONDS = 30;
   const DEBUG = true;
 
