@@ -1,7 +1,8 @@
-/* ======================= app.js (final) ======================= */
+/* ======================= app.js (final – no title overlay) ======================= */
 /* - JW Player (HLS/DASH + ClearKey)
    - Glass tabs + uniform channel grid (IDs expected: clock, now-playing, tabs, channel-list, player)
    - Histats counter pinned to the RIGHT inside header (.h-wrap), next to date/time (mode 10024)
+   - Suppress JW title overlay on mobile (no title in playlist + displaytitle=false)
 */
 
 const CHANNELS_URL = 'channels.json';
@@ -176,7 +177,7 @@ function render(){
   highlight(currentIndex);
 }
 
-/* -------------------- PLAYER -------------------- */
+/* -------------------- PLAYER (no title overlay) -------------------- */
 function playByChannel(ch){
   const i = channels.indexOf(ch);
   if(i>=0) play(i);
@@ -186,15 +187,29 @@ function play(i, opt={scroll:true}){
   currentIndex = i;
 
   const player = jwplayer('player').setup({
-    playlist:[{ title: ch.name||'', image: ch.poster||ch.logo||undefined, sources: [buildSource(ch)] }],
-    width:'100%', aspectratio:'16:9', autostart:true,
+    // ❌ ไม่ส่ง title เพื่อไม่ให้ OSD เด้ง
+    playlist:[{
+      image: ch.poster || ch.logo || undefined,
+      sources: [buildSource(ch)]
+    }],
+
+    width:'100%',
+    aspectratio:'16:9',
+    autostart:true,
     mute:/iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
-    preload:'metadata', playbackRateControls:true
+    preload:'metadata',
+    playbackRateControls:true,
+
+    // ✅ ปิดหัวข้อ/คำอธิบายในตัวผู้เล่น
+    displaytitle:false,
+    displaydescription:false
   });
 
+  // จัดการ autoplay บนมือถือ
   player.once('playAttemptFailed',()=>{ player.setMute(true); player.play(true); });
   player.on('error', e=>console.warn('Player error:', e));
 
+  // แสดงชื่อช่องที่ส่วนหัวแทน
   window.__setNowPlaying(ch.name || '');
   highlight(i);
   try{ localStorage.setItem('lastIndex', String(i)); }catch{}
