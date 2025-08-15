@@ -15,7 +15,7 @@ function buildProxyURLForPathStyle(originalUrl, ua, referer) {
   const base = `${u.protocol}//${u.host}${u.pathname.replace(/[^/]+$/, '')}`; // directory of MPD/TS
   const file = u.pathname.split('/').pop();
   const b64 = btoa(base);
-  let proxied = `${(window.PROXY_BASE||'')}/p/${b64}${file}`;
+  let proxied = `${(window.PROXY_BASE||'')}/p/${b64}/${file}`;
   const qs = [];
   if (ua) qs.push(`ua=${encodeURIComponent(ua)}`);
   if (referer) qs.push(`referer=${encodeURIComponent(referer)}`);
