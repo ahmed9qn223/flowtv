@@ -1,4 +1,4 @@
-/* Flow TV Hybrid Presence v3.3 (CORS-proof via JSONP fallback) */
+/* Flow TV Hybrid Presence v3.4 (adblock-safe JSONP fallback) */
 (function(){
   const API_BASE = "https://flow-tv.infy.uk/api";
   const VIEWER_TTL_SECONDS = 30;
@@ -42,13 +42,12 @@
     } catch(e){ if (DEBUG) console.warn('[presence] hb error', e); }
   }
 
-  // JSONP fallback to bypass CORS completely for viewer count
-  function jsonpViewer(channelId){
+  function jsonp(url){
     return new Promise((resolve,reject)=>{
-      const cb = `vc_cb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const cb = `vccb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       window[cb] = (data) => { try { resolve(data); } finally { cleanup(); } };
       const s = document.createElement('script');
-      s.src = `${API_BASE}/get_viewers.php?channel_id=${encodeURIComponent(channelId)}&ttl=${VIEWER_TTL_SECONDS}&callback=${cb}&t=${Date.now()}`;
+      s.src = url + (url.includes('?') ? '&' : '?') + 'cb=' + cb + '&t=' + Date.now();
       s.onerror = () => { cleanup(); reject(new Error('jsonp error')); };
       (document.head || document.documentElement).appendChild(s);
       function cleanup(){ try { delete window[cb]; } catch{} if (s && s.parentNode) s.parentNode.removeChild(s); }
@@ -59,16 +58,17 @@
   async function refreshViewerCount(){
     const id = window.currentChannelId;
     if (!id) { if (viewerEl) viewerEl.textContent=''; return; }
-    const url = `${API_BASE}/get_viewers.php?channel_id=${encodeURIComponent(id)}&ttl=${VIEWER_TTL_SECONDS}&t=${Date.now()}`;
+
+    const url = `${API_BASE}/vc.php?channel_id=${encodeURIComponent(id)}&ttl=${VIEWER_TTL_SECONDS}`;
     try {
-      const res = await fetch(url, { method:'GET', mode:'cors', cache:'no-store' });
+      const res = await fetch(url + '&t=' + Date.now(), { method:'GET', mode:'cors', cache:'no-store' });
       const data = await res.json();
       if (data && data.ok && viewerEl) viewerEl.textContent = `👥 กำลังดู: ${data.viewers}`;
       if (DEBUG) console.log('[presence] vc <- (fetch)', data);
     } catch(e){
       if (DEBUG) console.warn('[presence] fetch vc error, fallback to JSONP', e);
       try {
-        const data = await jsonpViewer(id);
+        const data = await jsonp(url);
         if (data && data.ok && viewerEl) viewerEl.textContent = `👥 กำลังดู: ${data.viewers}`;
         if (DEBUG) console.log('[presence] vc <- (jsonp)', data);
       } catch (e2) {
