@@ -1,7 +1,7 @@
 {
   "channels": [
     {
-      "name": "",
+      "name": "ช่อง 5 HD (TV5HD)",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/ch5new.logo.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/5/5.mpd",
       "type": "dash",
@@ -13,7 +13,7 @@
       }
     },
     {
-      "name": "",
+      "name": "NBT 2HD",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE//channelicon/0001.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/2/2.mpd",
       "type": "dash",
@@ -25,7 +25,7 @@
       }
     },
     {
-      "name": "",
+      "name": "Thai PBS HD (ช่อง 3)",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE//channelicon/0014.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/3/3.mpd",
       "type": "dash",
@@ -37,7 +37,7 @@
       }
     },
     {
-      "name": "",
+      "name": "ALTV ช่อง 4",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE//channelicon/ALTV.PNG",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/4/4.mpd",
       "type": "dash",
@@ -49,7 +49,7 @@
       }
     },
     {
-      "name": "",
+      "name": "T Sports 7",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/T-SPorts_7_Final.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/7/7.mpd",
       "type": "dash",
@@ -61,7 +61,7 @@
       }
     },
     {
-      "name": "",
+      "name": "TPTV ช่องรัฐสภา (10)",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE//channelicon/0048.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/10/10.mpd",
       "type": "dash",
@@ -73,7 +73,7 @@
       }
     },
     {
-      "name": "",
+      "name": "TNN 16",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/R2_0053.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/16/16.mpd",
       "type": "dash",
@@ -85,7 +85,7 @@
       }
     },
     {
-      "name": "",
+      "name": "JKN18",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE//channelicon/JKN18.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/18/18.mpd",
       "type": "dash",
@@ -97,7 +97,7 @@
       }
     },
     {
-      "name": "",
+      "name": "Nation TV 22",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/0021.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/22/22.mpd",
       "type": "dash",
@@ -109,7 +109,7 @@
       }
     },
     {
-      "name": "",
+      "name": "Workpoint TV 23",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon//0015_R.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/23/23.mpd",
       "type": "dash",
@@ -121,7 +121,7 @@
       }
     },
     {
-      "name": "",
+      "name": "True4U 24",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/0054.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/24/24.mpd",
       "type": "dash",
@@ -133,7 +133,7 @@
       }
     },
     {
-      "name": "",
+      "name": "GMM25",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/0019.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/25/25.mpd",
       "type": "dash",
@@ -145,7 +145,7 @@
       }
     },
     {
-      "name": "",
+      "name": "ช่อง 8 (27)",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon//0006.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/27/27.mpd",
       "type": "dash",
@@ -157,7 +157,7 @@
       }
     },
     {
-      "name": "",
+      "name": "MONO29",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/0016.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/29/29.mpd",
       "type": "dash",
@@ -169,7 +169,7 @@
       }
     },
     {
-      "name": "",
+      "name": "9MCOT HD (ช่อง 30)",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/MCOT_new.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/30/30.mpd",
       "type": "dash",
@@ -181,7 +181,7 @@
       }
     },
     {
-      "name": "",
+      "name": "one31 HD",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/0012.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/31/31.mpd",
       "type": "dash",
@@ -193,7 +193,7 @@
       }
     },
     {
-      "name": "",
+      "name": "Thairath TV 32",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/0013_R.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/32/32.mpd",
       "type": "dash",
@@ -205,7 +205,7 @@
       }
     },
     {
-      "name": "",
+      "name": "ช่อง 3 HD 33",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/LOGO3HD.PNG",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/33/33.mpd",
       "type": "dash",
@@ -217,7 +217,7 @@
       }
     },
     {
-      "name": "",
+      "name": "ช่อง 7HD 35",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/0018.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/35/35.mpd",
       "type": "dash",
@@ -229,7 +229,7 @@
       }
     },
     {
-      "name": "",
+      "name": "Amarin TV HD 34",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/AmarinTV_NEW512.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/34/34.mpd",
       "type": "dash",
@@ -241,7 +241,7 @@
       }
     },
     {
-      "name": "",
+      "name": "PPTV HD 36",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/PPTV_2024e.jpg",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/36/36.mpd",
       "type": "dash",
@@ -253,7 +253,7 @@
       }
     },
     {
-      "name": "",
+      "name": "Cartoonito",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon//Cartoonito.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/302/302.mpd",
       "type": "dash",
@@ -265,7 +265,7 @@
       }
     },
     {
-      "name": "",
+      "name": "Nickelodeon",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE//channelicon/LOGO_Nickelodeon2.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/303/303.mpd",
       "type": "dash",
@@ -277,7 +277,7 @@
       }
     },
     {
-      "name": "",
+      "name": "Nick Jr.",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE//channelicon/Nickjr_2024.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/304/304.mpd",
       "type": "dash",
@@ -289,7 +289,7 @@
       }
     },
     {
-      "name": "",
+      "name": "3BB Asian",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE///channelicon//3BBAsian_new.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/101/101.mpd",
       "type": "dash",
@@ -301,7 +301,7 @@
       }
     },
     {
-      "name": "",
+      "name": "MONO29 Plus",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE///channelicon//Mono29Plus_new.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/109/109.mpd",
       "type": "dash",
@@ -313,7 +313,7 @@
       }
     },
     {
-      "name": "",
+      "name": "ช่อง 103",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE//channelicon/R_0148.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/103/103.mpd",
       "type": "dash",
@@ -325,7 +325,7 @@
       }
     },
     {
-      "name": "",
+      "name": "ช่อง 104",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon//0149.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/104/104.mpd",
       "type": "dash",
@@ -337,7 +337,7 @@
       }
     },
     {
-      "name": "",
+      "name": "ช่อง 105",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon//0151.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/105/105.mpd",
       "type": "dash",
@@ -349,7 +349,7 @@
       }
     },
     {
-      "name": "",
+      "name": "ช่อง 106",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/0150.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/106/106.mpd",
       "type": "dash",
@@ -361,7 +361,7 @@
       }
     },
     {
-      "name": "",
+      "name": "ช่อง 107",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE//channelicon/0147.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/107/107.mpd",
       "type": "dash",
@@ -373,7 +373,7 @@
       }
     },
     {
-      "name": "",
+      "name": "3BB Sports 1",
       "logo": "https://ais-s.ais-vidnt.com/ais/play/origin/LIVE///channelicon//3BBsports1_new.png",
       "src": "https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/401/401.mpd",
       "type": "dash",
