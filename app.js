@@ -1,88 +1,82 @@
-```javascript
-// ================== app.js (final, patched) ==================
-// - Works with styles.css (glass tabs, anti-flicker)
-// - Uses ".ch-card" (renamed from ".card") to avoid CSS conflicts
-// - Loads channels.json, supports DASH/HLS + ClearKey
-// - Shows date/time (Bangkok) and "Now Playing" under it
-// - Centered, scrollable tabs with icons & smooth grid fade
-
-// ---------- Config ----------
+// ================== app.js (safe init + null guards) ==================
 const CHANNELS_URL = 'channels.json';
 const TIMEZONE = 'Asia/Bangkok';
 jwplayer.key = 'XSuP4qMl+9tK17QNb+4+th2Pm9AWgMO/cYH8CI0HGGr7bdjo';
 
-// Tabs
-const TABS = ['ทั้งหมด', 'ข่าว', 'บันเทิง', 'กีฬา', 'สารคดี', 'เพลง'];
+const TABS = ['ทั้งหมด','ข่าว','บันเทิง','กีฬา','สารคดี','เพลง'];
 let currentFilter = 'ทั้งหมด';
-
-// ---------- State ----------
 let channels = [];
 let currentIndex = -1;
 let scrollOnNextPlay = false;
 
-// ---------- Clock ----------
-const clockEl = document.getElementById('clock');
-function tick() {
-  const now = new Date();
-  clockEl.textContent = new Intl.DateTimeFormat('th-TH', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-    timeZone: TIMEZONE
-  }).format(now).replace(',', '');
+document.addEventListener('DOMContentLoaded', init);
+
+function init(){
+  // clock + now playing (ทำงานเฉพาะเมื่อมี element)
+  const clockEl = document.getElementById('clock');
+
+  function tick(){
+    if(!clockEl) return;
+    const now = new Date();
+    clockEl.textContent = new Intl.DateTimeFormat('th-TH',{
+      day:'2-digit', month:'short', year:'numeric',
+      hour:'2-digit', minute:'2-digit', second:'2-digit',
+      hour12:false, timeZone: TIMEZONE
+    }).format(now).replace(',', '');
+  }
+  if (clockEl){ tick(); setInterval(tick,1000); }
+
+  // ลบคำอธิบายย่อยเก่าถ้ามี
+  const subEl = document.querySelector('.sub'); if (subEl) subEl.remove();
+
+  // Now Playing ใต้เวลา (ถ้ามี clock)
+  let nowPlayingEl = document.getElementById('now-playing');
+  if (!nowPlayingEl && clockEl && clockEl.parentNode){
+    nowPlayingEl = document.createElement('div');
+    nowPlayingEl.id = 'now-playing';
+    nowPlayingEl.className = 'now-playing';
+    nowPlayingEl.setAttribute('aria-live','polite');
+    clockEl.after(nowPlayingEl);
+  }
+  function setNowPlaying(name){
+    if(!nowPlayingEl) return;
+    nowPlayingEl.textContent = name || '';
+    nowPlayingEl.title = name || '';
+    nowPlayingEl.classList.remove('swap'); void nowPlayingEl.offsetWidth;
+    nowPlayingEl.classList.add('swap');
+  }
+  // expose ให้ฟังก์ชันอื่นใช้
+  window.__setNowPlaying = setNowPlaying;
+
+  // สร้าง/ผูกแท็บ แล้วค่อยโหลดช่อง
+  enhanceTabButtons();
+  wireTabs();
+  centerTabsIfPossible();
+  window.addEventListener('resize', debounce(centerTabsIfPossible,150));
+  window.addEventListener('load', centerTabsIfPossible);
+
+  // โหลดรายการช่อง
+  fetch(CHANNELS_URL,{cache:'no-store'})
+    .then(r=>r.json())
+    .then(data=>{
+      channels = Array.isArray(data) ? data : (data.channels || []);
+      render();
+      const start = Math.max(0, Math.min(channels.length-1, parseInt(localStorage.getItem('lastIndex')||'0',10)));
+      if (channels.length) play(start,{scroll:false}); else setNowPlaying?.('');
+    })
+    .catch(e=>{
+      console.error('โหลด channels.json ไม่สำเร็จ:', e);
+      const grid = document.getElementById('channel-list');
+      if (grid) grid.innerHTML = `<div style="color:#fff;opacity:.8;text-align:center;padding:24px">โหลดรายการช่องไม่สำเร็จ</div>`;
+    });
 }
-tick();
-setInterval(tick, 1000);
 
-// Remove old subtitle if exists and add "Now Playing"
-const subEl = document.querySelector('.sub');
-if (subEl) subEl.remove();
-
-let nowPlayingEl = document.getElementById('now-playing');
-if (!nowPlayingEl && clockEl && clockEl.parentNode) {
-  nowPlayingEl = document.createElement('div');
-  nowPlayingEl.id = 'now-playing';
-  nowPlayingEl.className = 'now-playing';
-  nowPlayingEl.setAttribute('aria-live', 'polite');
-  clockEl.after(nowPlayingEl);
-}
-function setNowPlaying(name) {
-  if (!nowPlayingEl) return;
-  nowPlayingEl.textContent = name || '';
-  nowPlayingEl.title = name || '';
-  nowPlayingEl.classList.remove('swap'); void nowPlayingEl.offsetWidth;
-  nowPlayingEl.classList.add('swap');
-}
-
-// ---------- Load channels ----------
-fetch(CHANNELS_URL, { cache: 'no-store' })
-  .then(r => r.json())
-  .then(data => {
-    channels = Array.isArray(data) ? data : (data.channels || []);
-
-    enhanceTabButtons();      // build glass buttons with minimalist icons
-    wireTabs();               // click + arrow keys
-    centerTabsIfPossible();   // center when they fit
-    render();
-
-    const start = Math.max(0, Math.min(channels.length - 1, parseInt(localStorage.getItem('lastIndex') || '0', 10)));
-    if (channels.length) play(start, { scroll: false }); else setNowPlaying('');
-  })
-  .catch(e => {
-    console.error('โหลด channels.json ไม่สำเร็จ:', e);
-    alert('โหลดรายการช่องไม่สำเร็จ ตรวจสอบไฟล์ channels.json และ CORS');
-  });
-
-// ---------- Build glass tabs ----------
-function enhanceTabButtons() {
+/* ---------- Tabs (Glass) ---------- */
+function enhanceTabButtons(){
   const tabsRoot = document.getElementById('tabs');
-  if (!tabsRoot) return;
-  tabsRoot.querySelectorAll('.tab').forEach(btn => {
-    if (btn.querySelector('.tab-card')) return; // already enhanced
+  if(!tabsRoot) return;
+  tabsRoot.querySelectorAll('.tab').forEach(btn=>{
+    if (btn.querySelector('.tab-card')) return;
     const label = (btn.textContent || btn.dataset.filter || '').trim();
     btn.innerHTML = `
       <span class="tab-card">
@@ -91,84 +85,63 @@ function enhanceTabButtons() {
       </span>`;
   });
 }
-
-function getIconSVG(name) {
-  const stroke = 'currentColor', sw = 2;
-  switch (name) {
-    case 'ทั้งหมด': // grid
-      return `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" fill="${stroke}"/><rect x="14" y="3" width="7" height="7" rx="1" fill="${stroke}"/><rect x="3" y="14" width="7" height="7" rx="1" fill="${stroke}"/><rect x="14" y="14" width="7" height="7" rx="1" fill="${stroke}"/></svg>`;
-    case 'ข่าว': // newspaper
-      return `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="14" height="14" rx="2" stroke="${stroke}" stroke-width="${sw}"/><path d="M7 9h8M7 13h8M7 17h8" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/></svg>`;
-    case 'บันเทิง': // star
-      return `<svg viewBox="0 0 24 24" fill="none"><path d="M12 4l2.7 5.5 6 .9-4.4 4.3 1 6-5.3-2.8-5.3 2.8 1-6L3.3 10.4l6-.9L12 4z" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/></svg>`;
-    case 'กีฬา': // ball
-      return `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="${stroke}" stroke-width="${sw}"/><path d="M3 12h18" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/><path d="M12 3a9 9 0 0 1 0 18" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/><path d="M12 3a9 9 0 0 0 0 18" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/></svg>`;
-    case 'สารคดี': // book
-      return `<svg viewBox="0 0 24 24" fill="none"><path d="M4 6h7a3 3 0 0 1 3 3v11H7a3 3 0 0 0-3 3V6z" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/><path d="M13 6h7a3 3 0 0 1 3 3v11h-7a3 3 0 0 0-3 3V6z" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/></svg>`;
-    case 'เพลง': // note
-      return `<svg viewBox="0 0 24 24" fill="none"><path d="M14 4v9.5a2.5 2.5 0 1 1-2-2.45V8l-4 1v7a2 2 0 1 1-2-2V8.5l8-2.5Z" fill="${stroke}"/></svg>`;
-    default:
-      return `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="${stroke}" stroke-width="${sw}"/></svg>`;
+function getIconSVG(name){
+  const stroke='currentColor', sw=2;
+  switch(name){
+    case 'ทั้งหมด': return `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" fill="${stroke}"/><rect x="14" y="3" width="7" height="7" rx="1" fill="${stroke}"/><rect x="3" y="14" width="7" height="7" rx="1" fill="${stroke}"/><rect x="14" y="14" width="7" height="7" rx="1" fill="${stroke}"/></svg>`;
+    case 'ข่าว': return `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="14" height="14" rx="2" stroke="${stroke}" stroke-width="${sw}"/><path d="M7 9h8M7 13h8M7 17h8" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/></svg>`;
+    case 'บันเทิง': return `<svg viewBox="0 0 24 24" fill="none"><path d="M12 4l2.7 5.5 6 .9-4.4 4.3 1 6-5.3-2.8-5.3 2.8 1-6L3.3 10.4l6-.9L12 4z" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/></svg>`;
+    case 'กีฬา': return `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="${stroke}" stroke-width="${sw}"/><path d="M3 12h18" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/><path d="M12 3a9 9 0 0 1 0 18" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/><path d="M12 3a9 9 0 0 0 0 18" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/></svg>`;
+    case 'สารคดี': return `<svg viewBox="0 0 24 24" fill="none"><path d="M4 6h7a3 3 0 0 1 3 3v11H7a3 3 0 0 0-3 3V6z" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/><path d="M13 6h7a3 3 0 0 1 3 3v11h-7a3 3 0 0 0-3 3V6z" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/></svg>`;
+    case 'เพลง': return `<svg viewBox="0 0 24 24" fill="none"><path d="M14 4v9.5a2.5 2.5 0 1 1-2-2.45V8l-4 1v7a2 2 0 1 1-2-2V8.5l8-2.5Z" fill="${stroke}"/></svg>`;
+    default: return `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="${stroke}" stroke-width="${sw}"/></svg>`;
   }
 }
-
-// ---------- Tabs events ----------
-function wireTabs() {
+function wireTabs(){
   const tabsRoot = document.getElementById('tabs');
-  if (!tabsRoot) return;
-
-  tabsRoot.addEventListener('click', (e) => {
-    const btn = e.target.closest('.tab'); if (!btn) return;
+  if(!tabsRoot) return;
+  tabsRoot.addEventListener('click',(e)=>{
+    const btn = e.target.closest('.tab'); if(!btn) return;
     setActiveTab(btn.dataset.filter);
   });
-
-  tabsRoot.addEventListener('keydown', (e) => {
-    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  tabsRoot.addEventListener('keydown',(e)=>{
+    if(e.key!=='ArrowRight' && e.key!=='ArrowLeft') return;
     const arr = Array.from(tabsRoot.querySelectorAll('.tab'));
-    const idx = arr.findIndex(b => b.getAttribute('aria-selected') === 'true');
-    let next = e.key === 'ArrowRight' ? idx + 1 : idx - 1;
-    if (next < 0) next = arr.length - 1;
-    if (next >= arr.length) next = 0;
-    arr[next].focus();
-    setActiveTab(arr[next].dataset.filter);
-    e.preventDefault();
+    const idx = arr.findIndex(b=>b.getAttribute('aria-selected')==='true');
+    let next = e.key==='ArrowRight' ? idx+1 : idx-1;
+    if(next<0) next = arr.length-1;
+    if(next>=arr.length) next = 0;
+    arr[next].focus(); setActiveTab(arr[next].dataset.filter); e.preventDefault();
   });
 }
-
-function setActiveTab(name) {
-  if (!TABS.includes(name)) name = 'ทั้งหมด';
+function setActiveTab(name){
+  if(!TABS.includes(name)) name='ทั้งหมด';
   currentFilter = name;
-
-  document.querySelectorAll('#tabs .tab').forEach(btn => {
-    const sel = btn.dataset.filter === name;
+  document.querySelectorAll('#tabs .tab').forEach(btn=>{
+    const sel = btn.dataset.filter===name;
     btn.setAttribute('aria-selected', sel ? 'true' : 'false');
-    if (sel) btn.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+    if(sel) btn.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'});
   });
-
   const grid = document.getElementById('channel-list');
+  if(!grid) return;
   grid.classList.remove('fade-in'); void grid.offsetWidth;
   render();
   grid.classList.add('fade-in');
 }
-
-// Center tabs when no overflow
-function centerTabsIfPossible() {
-  const el = document.getElementById('tabs');
-  if (!el) return;
+function centerTabsIfPossible(){
+  const el = document.getElementById('tabs'); if(!el) return;
   const canCenter = el.scrollWidth <= el.clientWidth + 1;
   el.classList.toggle('tabs--center', canCenter);
 }
-function debounce(fn, wait = 150) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), wait); }; }
-window.addEventListener('load', centerTabsIfPossible);
-window.addEventListener('resize', debounce(centerTabsIfPossible, 150));
+function debounce(fn, wait=150){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
 
-// ---------- Filtering ----------
-function filterChannels(list, tab) {
-  if (tab === 'ทั้งหมด') return list;
+/* ---------- Filtering ---------- */
+function filterChannels(list, tab){
+  if(tab==='ทั้งหมด') return list;
   return list.filter(ch => (ch.category || guessCategory(ch)) === tab);
 }
-function guessCategory(ch) {
-  const s = (ch.name || '').toLowerCase();
+function guessCategory(ch){
+  const s=(ch.name||'').toLowerCase();
   if (/(ข่าว|tnn|nation|thairath|thairat|nbt|pbs|jkn|spring|voice)/.test(s)) return 'ข่าว';
   if (/(sport|กีฬา|t\s?sports|3bb\s?sports|bein|true\s?sport|pptv\s?hd\s?36)/.test(s)) return 'กีฬา';
   if (/(สารคดี|discovery|animal|nat.?geo|history|documentary|bbc earth|cgnc)/.test(s)) return 'สารคดี';
@@ -176,9 +149,9 @@ function guessCategory(ch) {
   return 'บันเทิง';
 }
 
-// ---------- Render channel grid ----------
-function render() {
-  const wrap = document.getElementById('channel-list');
+/* ---------- Render ---------- */
+function render(){
+  const wrap = document.getElementById('channel-list'); if(!wrap) return;
   const list = filterChannels(channels, currentFilter);
   wrap.innerHTML = '';
 
@@ -192,14 +165,14 @@ function render() {
       <div class="ch-card">
         <div class="logo-wrap">
           <img class="logo" loading="lazy" decoding="async"
-               src="${escapeHtml(ch.logo || '')}"
-               alt="${escapeHtml(ch.name || 'โลโก้ช่อง')}">
+               src="${escapeHtml(ch.logo||'')}"
+               alt="${escapeHtml(ch.name||'โลโก้ช่อง')}">
         </div>
-        <div class="name">${escapeHtml(ch.name || 'ช่อง')}</div>
+        <div class="name">${escapeHtml(ch.name||'ช่อง')}</div>
       </div>`;
 
     btn.addEventListener('click', (e) => {
-      makeRipple(e, btn.querySelector('.ch-card'));  // << renamed
+      makeRipple(e, btn.querySelector('.ch-card'));
       scrollOnNextPlay = true;
       playByChannel(ch);
     });
@@ -210,105 +183,89 @@ function render() {
   highlight(currentIndex);
 }
 
-// ---------- Play helpers ----------
-function playByChannel(ch) {
+/* ---------- Player ---------- */
+function playByChannel(ch){
   const idx = channels.indexOf(ch);
   if (idx >= 0) play(idx);
 }
-
-function play(i, opt = { scroll: true }) {
-  const ch = channels[i]; if (!ch) return;
+function play(i, opt={scroll:true}){
+  const ch = channels[i]; if(!ch) return;
   currentIndex = i;
 
-  const source = buildSource(ch);
   const player = jwplayer('player').setup({
-    playlist: [{ title: ch.name || '', image: ch.poster || ch.logo || undefined, sources: [source] }],
-    width: '100%',
-    aspectratio: '16:9',
-    autostart: true,
-    mute: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
-    preload: 'metadata',
-    playbackRateControls: true
+    playlist: [{ title: ch.name||'', image: ch.poster||ch.logo||undefined, sources: [buildSource(ch)] }],
+    width:'100%', aspectratio:'16:9', autostart:true,
+    mute:/iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+    preload:'metadata', playbackRateControls:true
   });
 
-  player.once('playAttemptFailed', () => { player.setMute(true); player.play(true); });
+  player.once('playAttemptFailed',()=>{ player.setMute(true); player.play(true); });
   player.on('error', e => console.warn('Player error:', e));
 
-  setNowPlaying(ch.name || '');
-
+  window.__setNowPlaying?.(ch.name || '');
   highlight(i);
-  try { localStorage.setItem('lastIndex', String(i)); } catch { }
+  try{ localStorage.setItem('lastIndex', String(i)); }catch{}
 
-  if ((opt.scroll ?? true) && scrollOnNextPlay) {
-    scrollToPlayer();
-    scrollOnNextPlay = false;
-  }
+  if ((opt.scroll ?? true) && scrollOnNextPlay) { scrollToPlayer(); scrollOnNextPlay = false; }
 }
 
-// ---------- JW source builders (HLS/DASH + ClearKey) ----------
-function buildSource(ch) {
+/* ---------- JW Source Helpers ---------- */
+function buildSource(ch){
   const url = buildUrlWithProxyIfNeeded(ch);
   const t = (ch.type || detectType(url) || 'auto').toLowerCase();
-  const src = { file: url };
-
-  if (t === 'dash') {
-    src.type = 'dash';
-    const ck = ch.drm?.clearkey || (ch.keyId && ch.key ? { keyId: ch.keyId, key: ch.key } : null);
-    if (ck?.keyId && ck?.key) src.drm = { clearkey: { keyId: ck.keyId, key: ck.key } };
-  } else if (t === 'hls') {
-    src.type = 'hls';
-  }
+  const src = { file:url };
+  if (t==='dash'){
+    src.type='dash';
+    const ck = ch.drm?.clearkey || (ch.keyId && ch.key ? {keyId:ch.keyId, key:ch.key} : null);
+    if (ck?.keyId && ck?.key) src.drm = { clearkey:{ keyId:ck.keyId, key:ck.key } };
+  } else if (t==='hls'){ src.type='hls'; }
   return src;
 }
-function detectType(u) {
-  const p = (u || '').split('?')[0].toLowerCase();
-  if (p.endsWith('.m3u8')) return 'hls';
-  if (p.endsWith('.mpd')) return 'dash';
+function detectType(u){
+  const p=(u||'').split('?')[0].toLowerCase();
+  if(p.endsWith('.m3u8')) return 'hls';
+  if(p.endsWith('.mpd'))  return 'dash';
   return 'auto';
 }
-function buildUrlWithProxyIfNeeded(ch) {
+function buildUrlWithProxyIfNeeded(ch){
   const raw = ch.src || ch.file || '';
-  if (window.PROXY_BASE && ch.proxy) {
-    const payload = { src: raw, referrer: ch.referrer || '', ua: ch.ua || '', headers: ch.headers || {} };
+  if (window.PROXY_BASE && ch.proxy){
+    const payload = { src: raw, referrer: ch.referrer||'', ua: ch.ua||'', headers: ch.headers||{} };
     const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
     return `${window.PROXY_BASE}/p/${b64}`;
   }
   return raw;
 }
 
-// ---------- UI helpers ----------
-function makeRipple(event, container) {
-  if (!container) return;
+/* ---------- UI helpers ---------- */
+function makeRipple(event, container){
+  if(!container) return;
   const rect = container.getBoundingClientRect();
   const max = Math.max(rect.width, rect.height);
   const ripple = document.createElement('span');
   ripple.className = 'ripple';
   ripple.style.width = ripple.style.height = `${max}px`;
-  ripple.style.left = `${event.clientX - rect.left - max / 2}px`;
-  ripple.style.top = `${event.clientY - rect.top - max / 2}px`;
-  const old = container.querySelector('.ripple'); if (old) old.remove();
+  ripple.style.left = `${event.clientX - rect.left - max/2}px`;
+  ripple.style.top  = `${event.clientY - rect.top  - max/2}px`;
+  const old = container.querySelector('.ripple'); if(old) old.remove();
   container.appendChild(ripple);
-  ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
+  ripple.addEventListener('animationend', ()=>ripple.remove(), { once:true });
 }
-
-function scrollToPlayer() {
+function scrollToPlayer(){
   const el = document.getElementById('player');
   const header = document.querySelector('header');
-  const y = el.getBoundingClientRect().top + window.pageYOffset - ((header?.offsetHeight) || 0) - 8;
-  window.scrollTo({ top: y, behavior: 'smooth' });
+  const y = el.getBoundingClientRect().top + window.pageYOffset - ((header?.offsetHeight)||0) - 8;
+  window.scrollTo({ top:y, behavior:'smooth' });
 }
-
-function highlight(globalIndex) {
-  document.querySelectorAll('.channel').forEach(el => {
+function highlight(globalIndex){
+  document.querySelectorAll('.channel').forEach(el=>{
     const idx = Number(el.dataset.globalIndex);
     el.classList.toggle('active', idx === globalIndex);
-    el.setAttribute('aria-pressed', idx === globalIndex ? 'true' : 'false');
+    el.setAttribute('aria-pressed', idx === globalIndex ? 'true':'false');
   });
 }
-
-function escapeHtml(s) {
+function escapeHtml(s){
   return String(s).replace(/[&<>"'`=\/]/g, c => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '/': '&#x2F;', '`': '&#x60;', '=': '&#x3D;'
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;'
   }[c]));
 }
-```
