@@ -1,7 +1,7 @@
-/* Flow TV Hybrid Presence v3.5 (Worker proxy) */
+/* Flow TV Hybrid Presence v3.6 (Durable Object backend) */
 (function(){
-  // >>> Set this to your Worker URL (e.g., https://flow-proxy.yourname.workers.dev)
-  const WORKER_BASE = "https://wildflower.ahmed9qn223.workers.dev";
+  // Set this to your Worker URL:
+  const WORKER_BASE = "https://wildflower.ahmed9qn223.workers.dev/";
   const VIEWER_TTL_SECONDS = 30;
   const DEBUG = true;
 
@@ -36,14 +36,11 @@
 
   async function sendHeartbeat(){
     if (!window.currentChannelId) return;
-    const url = `${WORKER_BASE}/hb?channel_id=${encodeURIComponent(window.currentChannelId)}&viewer_id=${encodeURIComponent(viewerId)}&t=${Date.now()}`;
+    const url = `${WORKER_BASE}/hb?channel_id=${encodeURIComponent(window.currentChannelId)}&viewer_id=${encodeURIComponent(viewerId)}&ttl=${VIEWER_TTL_SECONDS}&t=${Date.now()}`;
     try {
-      // Through worker we can use CORS normally
       const res = await fetch(url, { method:'GET', mode:'cors', cache:'no-store' });
-      if (DEBUG) console.log('[presence] hb via worker ->', window.currentChannelId, res.status);
-    } catch(e){
-      if (DEBUG) console.warn('[presence] hb error', e);
-    }
+      if (DEBUG) console.log('[presence] hb ->', window.currentChannelId, res.status);
+    } catch(e){ if (DEBUG) console.warn('[presence] hb error', e); }
   }
 
   async function refreshViewerCount(){
@@ -54,10 +51,8 @@
       const res = await fetch(url, { method:'GET', mode:'cors', cache:'no-store' });
       const data = await res.json();
       if (data && data.ok && viewerEl) viewerEl.textContent = `👥 กำลังดู: ${data.viewers}`;
-      if (DEBUG) console.log('[presence] vc <- (worker)', data);
-    } catch(e){
-      if (DEBUG) console.warn('[presence] vc worker error', e);
-    }
+      if (DEBUG) console.log('[presence] vc <-', data);
+    } catch(e){ if (DEBUG) console.warn('[presence] vc error', e); }
   }
 
   function startPresence(){
