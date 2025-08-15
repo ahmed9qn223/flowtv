@@ -373,14 +373,26 @@
       }
     },
     {
-      "name": "MONO PLUS",
-      "logo": "https://gigatv.3bbtv.co.th/wp-content/themes/changwattana/assets/channel/109.png",
-      "src": "https://udn-streamer1.cdn.3bbtv.com:8443/3bb/live/109/109.mpd",
+      "name": "AFF WOMEN 2025",
+      "logo": "https://raw.githubusercontent.com/Tonisupendi/Toni/refs/heads/main/20250814_193726.png",
+      "src": "https://tglmp04.akamaized.net/out/v1/400fc0702dee453bb33ebcc29466e58a/manifest.mpd",
       "type": "dash",
       "drm": {
         "clearkey": {
-          "keyId": "072eeb02f6744f838fcc8f0ef36b312e",
-          "key": "b797c12f2dd64728aae23fd3c8ef275c"
+          "keyId": "91b9592c819246c68b3b08a1fe08ba22",
+          "key": "fa0d80dfd865b34077bae44cd4a0c5e6"
+        }
+      }
+    },
+    {
+      "name": "AFF WOMEN 2025 V2",
+      "logo": "https://raw.githubusercontent.com/Tonisupendi/Toni/refs/heads/main/20250814_193726.png",
+      "src": "https://tglmp02.akamaized.net/out/v1/cc0fc82e76cb4e0093e81695284af443/manifest.mpd",
+      "type": "dash",
+      "drm": {
+        "clearkey": {
+          "keyId": "d418f733ed224f9bb9c2b1589db22a20",
+          "key": "6ed6fe26daa4b926810869ff60254ebb"
         }
       }
     }
