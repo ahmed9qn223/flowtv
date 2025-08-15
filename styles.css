@@ -1,12 +1,12 @@
 :root{
   --bg:#0c0c0d; --panel:#141516; --panel-2:#101112; --text:#f2f2f2;
-  --muted:#a0a7b0; --border:#242628; --ring:#22c55e;
+  --muted:#a0a7b0; --border:#242628;
   --maxw:1200px;
-  --tile-min:115px;       /* ขนาดการ์ดขั้นต่ำ (ปรับได้) */
+  --tile-min:115px;       /* ปรับขนาดการ์ดขั้นต่ำได้ */
 
-  /* สีเรืองแสง */
-  --glow:#22c55e;         /* เขียวหลัก */
-  --glow-soft:#86efac;    /* เขียวอ่อน */
+  /* สีเรืองแสง (ขาว) */
+  --glow:#ffffff;
+  --glow-soft:#ffffff;
 }
 
 *{box-sizing:border-box}
@@ -45,17 +45,22 @@ header{
   align-items:stretch;
 }
 
-/* การ์ดช่อง – ขอบเรืองแสง + ripple + ย่อเวลาแตะ */
+/* การ์ดช่อง – ขอบเรืองแสงสีขาว + ripple + ย่อเวลาแตะ */
 .channel{position:relative;border:0;background:none;padding:0;cursor:pointer;border-radius:16px}
+
+/* ออร่ารอบการ์ด */
 .channel::after{
   content:""; position:absolute; inset:-6px; border-radius:20px;
   background: radial-gradient(60% 60% at 50% 50%,
-              color-mix(in srgb, var(--glow) 55%, transparent) 0%,
+              rgba(255,255,255,.55) 0%,
               transparent 70%);
   filter: blur(14px); opacity: 0; transition: opacity .25s ease;
   pointer-events:none; z-index:0;
 }
-.channel:hover::after{opacity:.9; animation: neonPulse 2.4s ease-in-out infinite}
+.channel:hover::after,
+.channel.active::after{
+  opacity:.9; animation: neonPulse 2.4s ease-in-out infinite;
+}
 
 .card{
   position:relative; z-index:1; height:100%;
@@ -68,21 +73,20 @@ header{
 }
 .channel:hover .card{
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--glow) 55%, var(--border));
+  border-color: rgba(255,255,255,.7);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--glow) 70%, transparent) inset,
-    0 0 10px color-mix(in srgb, var(--glow) 70%, transparent),
-    0 0 20px color-mix(in srgb, var(--glow-soft) 55%, transparent);
+    0 0 0 1px rgba(255,255,255,.75) inset,
+    0 0 12px rgba(255,255,255,.45),
+    0 0 26px rgba(255,255,255,.25);
 }
 .channel:active .card{ transform: scale(.985) }
 .channel.active .card{
-  border-color: var(--glow);
+  border-color: #fff;
   box-shadow:
-    0 0 0 1.5px var(--glow) inset,
-    0 0 12px color-mix(in srgb, var(--glow) 80%, transparent),
-    0 0 26px color-mix(in srgb, var(--glow-soft) 65%, transparent);
+    0 0 0 1.5px #fff inset,
+    0 0 16px rgba(255,255,255,.6),
+    0 0 32px rgba(255,255,255,.35);
 }
-.channel.active::after{opacity:.9; animation: neonPulse 2.4s ease-in-out infinite}
 
 .logo-wrap{
   width:78px;height:78px;border-radius:12px;background:#0e0f10;
@@ -95,7 +99,7 @@ header{
   overflow:hidden;text-overflow:ellipsis;line-height:1.25;min-height:2.5em;
 }
 
-/* Ripple effect (บนการ์ด) */
+/* Ripple effect */
 .ripple{
   position:absolute; border-radius:50%; pointer-events:none;
   transform:scale(0); opacity:.35; background:#fff;
