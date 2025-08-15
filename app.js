@@ -26,7 +26,7 @@ tick(); setInterval(tick,1000);
 
 // Now Playing element under clock
 let nowPlayingEl = document.getElementById('now-playing');
-const subEl = document.querySelector('.sub'); if (subEl) subEl.remove(); // remove old subtitle if exists
+const subEl = document.querySelector('.sub'); if (subEl) subEl.remove();
 if (!nowPlayingEl && clockEl && clockEl.parentNode) {
   nowPlayingEl = document.createElement('div');
   nowPlayingEl.id = 'now-playing';
