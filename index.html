@@ -2,81 +2,90 @@
 <html lang="th">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>FLOWTV</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>3BBTV</title>
 
-  <!-- JW Player -->
   <script src="https://ssl.p.jwpcdn.com/player/v/8.26.0/jwplayer.js"></script>
   <script>jwplayer.key = 'XSuP4qMl+9tK17QNb+4+th2Pm9AWgMO/cYH8CI0HGGr7bdjo';</script>
 
   <style>
     :root{
-      --bg:#0b0b0b;--panel:#141414;--text:#eaeaea;--muted:#9aa0a6;--border:#232323;--accent:#23c55e;
+      --bg:#0b0b0b; --panel:#141414; --text:#eaeaea; --muted:#9aa0a6; --border:#232323; --accent:#22c55e;
+      --maxw:1200px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0;background:var(--bg);color:var(--text);
+      margin:0; background:var(--bg); color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, "Sarabun", Arial;
-      display:grid;grid-template-rows:auto auto 1fr;
+      display:grid; grid-template-rows:auto 1fr; overflow-x:hidden;
     }
+    /* แถบเวลาบนสุด */
     header{
-      position:sticky;top:0;z-index:10;
-      display:flex;justify-content:center;align-items:center;
-      padding:10px 12px;border-bottom:1px solid var(--border);
-      background:linear-gradient(to bottom, rgba(0,0,0,.3), rgba(0,0,0,0));
-      backdrop-filter: blur(6px);
+      position:sticky; top:0; z-index:10;
+      display:flex; justify-content:center; align-items:center;
+      padding:10px 12px; border-bottom:1px solid var(--border);
+      background:#0b0b0bcc; backdrop-filter:blur(6px);
     }
-    .clock{
-      font-weight:700;font-size:18px;letter-spacing:.2px;text-align:center;
-    }
-    .sub{
-      font-size:12px;color:var(--muted);text-align:center;margin-top:4px;
-    }
-    #player{width:100%;max-width:1200px;margin:6px auto 0;aspect-ratio:16/9}
-    .wrap{max-width:1200px;width:100%;margin:0 auto;padding:12px}
+    .clock{font-weight:700; font-size:clamp(14px,2vw,18px); text-align:center}
+    .sub{font-size:12px; color:var(--muted); text-align:center; margin-top:4px}
+
+    /* โครงหลักของคอนเทนต์ */
+    .app{inline-size:min(100%, var(--maxw)); margin-inline:auto; padding-inline:clamp(8px,2vw,16px)}
+    #player{inline-size:100%; aspect-ratio:16/9; max-inline-size:100%}
+    img{max-width:100%; display:block} /* กันรูปทำล้น */
+
+    /* รายการช่อง */
     #channel-list{
-      display:grid;gap:10px;
-      grid-template-columns:repeat(auto-fill,minmax(92px,1fr));
-      margin-top:8px;
+      display:grid; gap:10px; margin:10px 0 14px;
+      grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
     }
     .channel{
-      background:var(--panel);border:1px solid var(--border);border-radius:14px;
-      padding:10px;cursor:pointer;display:grid;place-items:center;gap:8px;
+      background:var(--panel); border:1px solid var(--border); border-radius:14px;
+      padding:10px; cursor:pointer; display:grid; place-items:center; gap:8px;
       transition:transform .08s ease, border-color .15s ease, box-shadow .15s ease;
-      text-align:center;min-height:116px;
+      text-align:center; min-height:112px;
     }
-    .channel:hover{transform:translateY(-2px);border-color:#2f2f2f;box-shadow:0 2px 10px rgba(0,0,0,.25)}
-    .channel.active{outline:2px solid var(--accent);outline-offset:-2px}
-    .channel img{width:58px;height:58px;object-fit:contain;filter:drop-shadow(0 0 0 rgba(0,0,0,.2))}
-    .channel span{display:block;font-size:12px;line-height:1.25}
-    .footer-tip{
-      color:var(--muted);font-size:12px;text-align:center;margin:10px 0 0;
+    .channel:hover{transform:translateY(-2px); border-color:#2e2e2e; box-shadow:0 2px 10px rgba(0,0,0,.25)}
+    .channel.active{outline:2px solid var(--accent); outline-offset:-2px}
+    .channel img{inline-size:58px; block-size:58px; object-fit:contain}
+    .channel span{
+      font-size:12px; line-height:1.25; max-width:100%;
+      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+      text-overflow:ellipsis; word-break:break-word;
     }
-    /* ให้ UI สะอาดหายใจโล่ง ๆ บนอุปกรณ์พกพา */
+    .footer-tip{color:var(--muted); font-size:12px; text-align:center; margin:6px 0 10px; word-break:break-word}
+
+    /* จอเล็กลง = ปุ่มเล็กลงอัตโนมัติ */
+    @media (max-width:768px){
+      #channel-list{grid-template-columns: repeat(auto-fit, minmax(84px, 1fr))}
+      .channel{min-height:106px}
+      .channel img{inline-size:52px; block-size:52px}
+    }
     @media (max-width:480px){
-      .clock{font-size:16px}
-      #channel-list{grid-template-columns:repeat(auto-fill,minmax(88px,1fr))}
+      #channel-list{grid-template-columns: repeat(auto-fit, minmax(78px, 1fr))}
+      .channel{min-height:100px}
+      .channel img{inline-size:48px; block-size:48px}
     }
   </style>
 </head>
 <body>
   <header>
-    <div>
+    <div class="app" style="display:grid;justify-items:center">
       <div id="clock" class="clock">--</div>
       <div class="sub">อัปเดตอัตโนมัติ • เวลาเขตกรุงเทพฯ (UTC+7)</div>
     </div>
   </header>
 
-  <div id="player" aria-label="วิดีโอผู้เล่น"></div>
+  <main class="app">
+    <div id="player" aria-label="ตัวเล่นวิดีโอ"></div>
 
-  <div class="wrap">
     <div id="channel-list" aria-live="polite"></div>
     <div class="footer-tip">แตะโลโก้ช่องเพื่อเล่น • บางอุปกรณ์อาจเริ่มแบบปิดเสียงก่อน</div>
-  </div>
+  </main>
 
   <script>
-    const CHANNELS_URL = 'channels.json';     // วางไฟล์ไว้โฟลเดอร์เดียวกัน
+    const CHANNELS_URL = 'channels.json';
     const TIMEZONE = 'Asia/Bangkok';
 
     let channels = [];
@@ -88,27 +97,28 @@
       .then(data => {
         channels = Array.isArray(data) ? data : (data.channels || []);
         renderList(channels);
-        if (channels.length) play( Number(localStorage.getItem('lastIndex') || 0) );
+        const start = Math.max(0, Math.min(channels.length-1, parseInt(localStorage.getItem('lastIndex')||'0',10)));
+        if (channels.length) play(start);
       })
       .catch(err => {
         console.error('โหลด channels ล้มเหลว', err);
         alert('โหลดรายการช่องไม่สำเร็จ ตรวจสอบไฟล์ channels.json และ CORS');
       });
 
-    // นาฬิกาบนสุด (ไทย/กรุงเทพฯ)
+    // นาฬิกา
     const clockEl = document.getElementById('clock');
     function updateClock(){
       const now = new Date();
-      const fmt = new Intl.DateTimeFormat('th-TH', {
+      const fmt = new Intl.DateTimeFormat('th-TH',{
         day:'2-digit', month:'short', year:'numeric',
         hour:'2-digit', minute:'2-digit', second:'2-digit',
         hour12:false, timeZone: TIMEZONE
-      }).format(now);
-      clockEl.textContent = fmt.replace(' ', ' ').replace(',', '');
+      }).format(now).replace(',', '');
+      clockEl.textContent = fmt;
     }
     updateClock(); setInterval(updateClock, 1000);
 
-    // เรนเดอร์รายการช่อง (ไม่มีช่องค้นหา ตามที่ขอ)
+    // เรนเดอร์รายการช่อง
     function renderList(list){
       const wrap = document.getElementById('channel-list');
       wrap.innerHTML = '';
@@ -127,25 +137,17 @@
 
     // เล่นช่อง
     function play(i){
-      const ch = channels[i];
-      if(!ch) return;
-
+      const ch = channels[i]; if(!ch) return;
       currentIndex = i;
+
       const source = buildSource(ch);
-      const config = {
-        playlist: [{
-          title: ch.name || '',
-          image: ch.poster || ch.logo || undefined,
-          sources: [source],
-        }],
-        width:'100%', aspectratio:'16:9', autostart:true,
-        mute: shouldMuteForMobile(), preload:'metadata',
-        playbackRateControls:true
-      };
+      const player = jwplayer('player').setup({
+        playlist: [{ title: ch.name||'', image: ch.poster||ch.logo||undefined, sources:[source] }],
+        width: '100%', aspectratio: '16:9', autostart: true,
+        mute: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+        preload: 'metadata', playbackRateControls: true
+      });
 
-      const player = jwplayer('player').setup(config);
-
-      // บางมือถือบล็อก autoplay ให้ลอง mute แล้วเล่นอีกครั้ง
       player.once('playAttemptFailed', () => { player.setMute(true); player.play(true); });
       player.on('error', (e) => console.warn('Player error:', e));
 
@@ -153,49 +155,36 @@
       try{ localStorage.setItem('lastIndex', String(i)); }catch{}
     }
 
-    // แปลงข้อมูลช่องเป็นแหล่งสตรีม JW
+    // สร้าง source (รองรับ HLS/DASH + ClearKey)
     function buildSource(ch){
       const url = buildUrlWithProxyIfNeeded(ch);
       const t = (ch.type || detectTypeFromUrl(url) || 'auto').toLowerCase();
       const src = { file: url };
-
       if (t === 'dash'){
         src.type = 'dash';
-        if (ch.drm && ch.drm.clearkey && ch.drm.clearkey.keyId && ch.drm.clearkey.key){
+        if (ch.drm?.clearkey?.keyId && ch.drm?.clearkey?.key){
           src.drm = { clearkey: { keyId: ch.drm.clearkey.keyId, key: ch.drm.clearkey.key } };
         }
-      } else if (t === 'hls'){
-        src.type = 'hls';
-      }
+      } else if (t === 'hls'){ src.type = 'hls'; }
       return src;
     }
-
     function detectTypeFromUrl(u){
       const p = (u||'').split('?')[0].toLowerCase();
       if (p.endsWith('.m3u8')) return 'hls';
-      if (p.endsWith('.mpd')) return 'dash';
+      if (p.endsWith('.mpd'))  return 'dash';
       return 'auto';
     }
-
-    // (ถ้าต้องผ่าน Proxy Worker ให้ระบุ window.PROXY_BASE และตั้ง ch.proxy=true)
     function buildUrlWithProxyIfNeeded(ch){
       if (window.PROXY_BASE && ch.proxy){
-        const payload = {
-          src: ch.src, referrer: ch.referrer || '', ua: ch.ua || '',
-          headers: ch.headers || {}
-        };
+        const payload = { src: ch.src, referrer: ch.referrer||'', ua: ch.ua||'', headers: ch.headers||{} };
         const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
         return `${window.PROXY_BASE}/p/${b64}`;
       }
       return ch.src;
     }
-
-    function shouldMuteForMobile(){ return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent); }
-
     function highlightActive(i){
-      document.querySelectorAll('.channel').forEach((el, idx) => el.classList.toggle('active', idx === i));
+      document.querySelectorAll('.channel').forEach((el, idx) => el.classList.toggle('active', idx===i));
     }
-
     function escapeHtml(s){
       return String(s).replace(/[&<>"'`=\/]/g, c => ({
         '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;'
