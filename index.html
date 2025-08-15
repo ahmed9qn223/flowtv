@@ -9,12 +9,16 @@
   <script src="https://ssl.p.jwpcdn.com/player/v/8.26.0/jwplayer.js"></script>
   <script>jwplayer.key='XSuP4qMl+9tK17QNb+4+th2Pm9AWgMO/cYH8CI0HGGr7bdjo';</script>
 
-  <!-- URL ไปยังไฟล์ channels.json บน GitHub (RAW URL ของคุณ) -->
+  <!-- RAW URL ไปยังไฟล์ channels.json ใน GitHub ของคุณ -->
   <script>
     const CHANNELS_URL =
-      "https://raw.githubusercontent.com/ahmed9qn223/flowtv/refs/heads/main/channels.json";
-    // ถ้ามี proxy ให้เปิดใช้: window.PROXY_BASE = 'https://your-worker.workers.dev';
+      "https://raw.githubusercontent.com/<USER>/<REPO>/main/channels/channels.json";
+    // ถ้ามี proxy ก็เซ็ตได้ เช่น:
+    // window.PROXY_BASE = 'https://your-worker.workers.dev';
   </script>
+
+  <!-- กัน 404 favicon โดยไม่โหลดรูปภายนอก -->
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 
   <style>
     *{box-sizing:border-box}
@@ -28,6 +32,7 @@
       box-shadow:0 6px 24px rgba(0,0,0,.35)
     }
     #player{width:100%}
+    .note{color:#bbb;font-size:12px;margin:8px 0 12px;text-align:center}
 
     .toolbar{width:100%;max-width:900px;margin:10px 0;display:flex;gap:8px}
     .toolbar input{
@@ -49,12 +54,11 @@
     .logo{width:44px;height:44px;object-fit:contain;display:block;margin:0 auto 6px}
     .channel-name{color:#f3f3f3;font-size:12px;line-height:1.1}
     .channel-group{color:#9aa;font-size:11px}
-    .note{color:#bbb;font-size:12px;margin:8px 0 12px;text-align:center}
   </style>
 </head>
 <body>
   <div id="player-container"><div id="player"></div></div>
-  <div class="note">รองรับ DASH (.mpd + ClearKey) และ HLS (.m3u8) – รายการช่องโหลดจาก GitHub</div>
+  <div class="note">รองรับ DASH (.mpd + ClearKey) และ HLS (.m3u8) — รายการช่องโหลดจาก GitHub</div>
 
   <div class="toolbar">
     <input id="search" placeholder="ค้นหาช่อง หรือกรองด้วยชื่อกลุ่ม" />
@@ -64,7 +68,7 @@
   <div class="channel-grid" id="grid"></div>
 
   <script>
-    // -------- helpers --------
+    // ---------- helpers ----------
     function maybeProxy(url){
       if(!window.PROXY_BASE) return url;
       try{ return `${window.PROXY_BASE}/p/${btoa(url)}` }catch{ return url }
@@ -76,7 +80,7 @@
       return undefined;
     }
 
-    // -------- player --------
+    // ---------- player ----------
     const player = jwplayer('player');
     player.setup({
       playlist:[{sources:[]}],
@@ -84,20 +88,24 @@
       autostart:'viewable', mute:true,
       stretching:'uniform', preload:'metadata', controls:true
     });
+
     function playChannel(ch){
       const src={file:maybeProxy(ch.url)};
       const t=ch.type||detectType(ch.url);
       if(t) src.type=t;
-      if(t==='dash' && ch.drm && ch.drm.clearkey){ src.drm={clearkey:ch.drm.clearkey}; }
+      if(t==='dash' && ch.drm && ch.drm.clearkey){
+        src.drm={clearkey:ch.drm.clearkey};
+      }
       player.load([{sources:[src]}]);
       player.play();
     }
+
     player.on('error',e=>{
       alert('เล่นสตรีมไม่สำเร็จ: '+(e?.message||'Unknown error')+
             '\nถ้าสตรีมต้องการ Referer/UA/CORS ให้ตั้ง window.PROXY_BASE ใช้ proxy');
     });
 
-    // -------- channels from GitHub --------
+    // ---------- channels from GitHub ----------
     let ALL=[];
     async function loadChannels(){
       const res=await fetch(CHANNELS_URL+'?t='+Date.now(),{cache:'no-store'});
@@ -107,6 +115,7 @@
       render(ALL);
       if(ALL.length) playChannel(ALL[0]);
     }
+
     function render(list){
       const grid=document.getElementById('grid'); grid.innerHTML='';
       list.forEach(ch=>{
