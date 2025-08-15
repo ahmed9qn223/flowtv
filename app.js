@@ -1,4 +1,4 @@
-// ================== app.js (final; Histats top-left) ==================
+// ================== app.js (final; Histats inside header) ==================
 const CHANNELS_URL = 'channels.json';
 const TIMEZONE = 'Asia/Bangkok';
 jwplayer.key = 'XSuP4qMl+9tK17QNb+4+th2Pm9AWgMO/cYH8CI0HGGr7bdjo';
@@ -12,7 +12,7 @@ let scrollOnNextPlay = false;
 document.addEventListener('DOMContentLoaded', init);
 
 function init(){
-  // ----- Clock -----
+  /* Clock */
   const clockEl = document.getElementById('clock');
   function tick(){
     if(!clockEl) return;
@@ -25,7 +25,7 @@ function init(){
   }
   if (clockEl){ tick(); setInterval(tick,1000); }
 
-  // ----- Now Playing -----
+  /* Now Playing under clock */
   const subEl = document.querySelector('.sub'); if (subEl) subEl.remove();
   let nowPlayingEl = document.getElementById('now-playing');
   if (!nowPlayingEl && clockEl && clockEl.parentNode){
@@ -44,15 +44,15 @@ function init(){
   }
   window.__setNowPlaying = setNowPlaying;
 
-  // ----- Histats: มุมซ้ายบนสุด -----
+  /* Histats inside header (top-left) */
   mountHistatsTopLeft();
 
-  // ----- Tabs -----
+  /* Tabs & UI */
   enhanceTabButtons(); wireTabs(); centerTabsIfPossible();
   window.addEventListener('resize', debounce(centerTabsIfPossible,150));
   window.addEventListener('load', centerTabsIfPossible);
 
-  // ----- Load channels -----
+  /* Load channels */
   fetch(CHANNELS_URL,{cache:'no-store'})
     .then(r=>r.json())
     .then(data=>{
@@ -68,7 +68,7 @@ function init(){
     });
 }
 
-/* ---------- Tabs (Glass) ---------- */
+/* -------- Tabs (Glass) -------- */
 function enhanceTabButtons(){
   const tabsRoot = document.getElementById('tabs');
   if(!tabsRoot) return;
@@ -132,7 +132,7 @@ function centerTabsIfPossible(){
 }
 function debounce(fn,wait=150){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),wait)}}
 
-/* ---------- Filtering ---------- */
+/* -------- Filtering -------- */
 function filterChannels(list,tab){
   if(tab==='ทั้งหมด') return list;
   return list.filter(ch => (ch.category || guessCategory(ch)) === tab);
@@ -146,7 +146,7 @@ function guessCategory(ch){
   return 'บันเทิง';
 }
 
-/* ---------- Render ---------- */
+/* -------- Render grid -------- */
 function render(){
   const wrap = document.getElementById('channel-list'); if(!wrap) return;
   const list = filterChannels(channels, currentFilter);
@@ -171,7 +171,7 @@ function render(){
   highlight(currentIndex);
 }
 
-/* ---------- Player ---------- */
+/* -------- Player -------- */
 function playByChannel(ch){const idx=channels.indexOf(ch); if(idx>=0) play(idx);}
 function play(i,opt={scroll:true}){
   const ch=channels[i]; if(!ch) return; currentIndex=i;
@@ -189,7 +189,7 @@ function play(i,opt={scroll:true}){
   if((opt.scroll??true)&&scrollOnNextPlay){scrollToPlayer();scrollOnNextPlay=false;}
 }
 
-/* ---------- JW source helpers ---------- */
+/* -------- JW helpers -------- */
 function buildSource(ch){
   const url=buildUrlWithProxyIfNeeded(ch);
   const t=(ch.type||detectType(url)||'auto').toLowerCase();
@@ -212,7 +212,7 @@ function buildUrlWithProxyIfNeeded(ch){
   return raw;
 }
 
-/* ---------- UI helpers ---------- */
+/* -------- UI helpers -------- */
 function makeRipple(event,container){
   if(!container) return;
   const r=container.getBoundingClientRect(); const max=Math.max(r.width,r.height);
@@ -236,18 +236,25 @@ function highlight(globalIndex){
 }
 function escapeHtml(s){return String(s).replace(/[&<>"'`=\/]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;'}[c]));}
 
-/* ---------- Histats (Top-left fixed) ---------- */
+/* -------- Histats (top-left inside header) -------- */
 function mountHistatsTopLeft(){
-  // placeholder ติดมุมซ้ายบน
-  if(!document.getElementById('histats_counter')){
-    const d=document.createElement('div'); d.id='histats_counter'; document.body.appendChild(d);
+  const anchor = document.querySelector('.h-wrap') ||
+                 document.querySelector('header') ||
+                 document.body;
+
+  let holder = document.getElementById('histats_counter');
+  if (!holder) {
+    holder = document.createElement('div');
+    holder.id = 'histats_counter';
+    anchor.appendChild(holder);
+  } else if (holder.parentElement !== anchor) {
+    anchor.appendChild(holder);
   }
 
-  // ตั้งค่าตามสคริปต์ที่ให้มา
   window._Hasync = window._Hasync || [];
   window._Hasync.push([
     'Histats.startgif',
-    '1,4970267,4,10005,"div#histatsC {position: absolute;top:0px;left:0px;}body>div#histatsC {position: fixed;}"'
+    '1,4970267,4,10005,"div#histatsC{position:absolute;top:0;left:0;}body>div#histatsC{position:static;}"'
   ]);
   window._Hasync.push(['Histats.fasi','1']);
   window._Hasync.push(['Histats.track_hits','']);
@@ -257,12 +264,6 @@ function mountHistatsTopLeft(){
   hs.src='//s10.histats.com/js15_giftop_as.js';
   (document.head||document.body).appendChild(hs);
 
-  // ย้ายกล่องที่สคริปต์สร้าง (#histatsC) เข้ามาไว้ใน placeholder ของเรา
-  const move = () => {
-    const c=document.getElementById('histatsC');
-    const target=document.getElementById('histats_counter');
-    if(c && target && !target.contains(c)){ target.appendChild(c); return; }
-    requestAnimationFrame(move);
-  };
+  const move=()=>{const c=document.getElementById('histatsC'); if(c && !holder.contains(c)){holder.appendChild(c);return;} requestAnimationFrame(move);};
   move();
 }
