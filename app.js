@@ -24,8 +24,9 @@ function tick(){
 }
 tick(); setInterval(tick,1000);
 
-// optional: Now Playing element under clock (if in DOM)
+// Now Playing element under clock
 let nowPlayingEl = document.getElementById('now-playing');
+const subEl = document.querySelector('.sub'); if (subEl) subEl.remove(); // remove old subtitle if exists
 if (!nowPlayingEl && clockEl && clockEl.parentNode) {
   nowPlayingEl = document.createElement('div');
   nowPlayingEl.id = 'now-playing';
@@ -47,7 +48,7 @@ fetch(CHANNELS_URL,{cache:'no-store'})
   .then(data=>{
     channels = Array.isArray(data) ? data : (data.channels || []);
 
-    enhanceTabButtons();      // build colorful icon tiles
+    enhanceTabButtons();      // build glass buttons with icons
     wireTabs();               // events & keyboard
     centerTabsIfPossible();   // center if they fit
     render();
@@ -60,7 +61,7 @@ fetch(CHANNELS_URL,{cache:'no-store'})
     alert('โหลดรายการช่องไม่สำเร็จ ตรวจสอบไฟล์ channels.json และ CORS');
   });
 
-// ===== Build colorful icon tabs =====
+// ===== Build glass tabs with minimalist icons =====
 function enhanceTabButtons(){
   const tabsRoot = document.getElementById('tabs');
   if(!tabsRoot) return;
@@ -76,8 +77,7 @@ function enhanceTabButtons(){
 }
 
 function getIconSVG(name){
-  const stroke = 'currentColor';
-  const sw = 2;
+  const stroke = 'currentColor', sw = 2;
   switch (name) {
     case 'ทั้งหมด': // grid
       return `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" fill="${stroke}"/><rect x="14" y="3" width="7" height="7" rx="1" fill="${stroke}"/><rect x="3" y="14" width="7" height="7" rx="1" fill="${stroke}"/><rect x="14" y="14" width="7" height="7" rx="1" fill="${stroke}"/></svg>`;
@@ -89,7 +89,7 @@ function getIconSVG(name){
       return `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="${stroke}" stroke-width="${sw}"/><path d="M3 12h18" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/><path d="M12 3a9 9 0 0 1 0 18" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/><path d="M12 3a9 9 0 0 0 0 18" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/></svg>`;
     case 'สารคดี': // book
       return `<svg viewBox="0 0 24 24" fill="none"><path d="M4 6h7a3 3 0 0 1 3 3v11H7a3 3 0 0 0-3 3V6z" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/><path d="M13 6h7a3 3 0 0 1 3 3v11h-7a3 3 0 0 0-3 3V6z" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/></svg>`;
-    case 'เพลง': // music note
+    case 'เพลง': // note
       return `<svg viewBox="0 0 24 24" fill="none"><path d="M14 4v9.5a2.5 2.5 0 1 1-2-2.45V8l-4 1v7a2 2 0 1 1-2-2V8.5l8-2.5Z" fill="${stroke}"/></svg>`;
     default:
       return `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="${stroke}" stroke-width="${sw}"/></svg>`;
@@ -101,13 +101,13 @@ function wireTabs(){
   const tabsRoot = document.getElementById('tabs');
   if(!tabsRoot) return;
 
-  // Click to switch
+  // Click
   tabsRoot.addEventListener('click', (e)=>{
     const btn = e.target.closest('.tab'); if(!btn) return;
     setActiveTab(btn.dataset.filter);
   });
 
-  // Arrow key navigation (L/R)
+  // Arrow keys
   tabsRoot.addEventListener('keydown', (e)=>{
     if(e.key!=='ArrowRight' && e.key!=='ArrowLeft') return;
     const arr = Array.from(tabsRoot.querySelectorAll('.tab'));
@@ -125,7 +125,7 @@ function setActiveTab(name){
   if(!TABS.includes(name)) name = 'ทั้งหมด';
   currentFilter = name;
 
-  // ARIA + scroll to center
+  // ARIA + keep selected centered if scrollable
   document.querySelectorAll('#tabs .tab').forEach(btn=>{
     const sel = btn.dataset.filter===name;
     btn.setAttribute('aria-selected', sel ? 'true' : 'false');
@@ -143,7 +143,7 @@ function setActiveTab(name){
 function centerTabsIfPossible(){
   const el = document.getElementById('tabs');
   if (!el) return;
-  const canCenter = el.scrollWidth <= el.clientWidth + 1;
+  const canCenter = el.scrollWidth <= el.clientWidth + 1; // account rounding
   el.classList.toggle('tabs--center', canCenter);
 }
 function debounce(fn, wait=150){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
@@ -229,7 +229,7 @@ function play(i, opt={scroll:true}){
   }
 }
 
-// ===== JW source builders =====
+// ===== JW source builders (HLS/DASH + ClearKey) =====
 function buildSource(ch){
   const url = buildUrlWithProxyIfNeeded(ch);
   const t = (ch.type || detectType(url) || 'auto').toLowerCase();
