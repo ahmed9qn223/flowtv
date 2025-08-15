@@ -1,4 +1,8 @@
-// ================== app.js (safe init + null guards) ==================
+// ================== app.js (final) ==================
+// - Glass tabs (anti-flicker), uniform card size, white glow
+// - DASH/HLS + ClearKey
+// - Clock + Now Playing + Histats centered under the clock
+
 const CHANNELS_URL = 'channels.json';
 const TIMEZONE = 'Asia/Bangkok';
 jwplayer.key = 'XSuP4qMl+9tK17QNb+4+th2Pm9AWgMO/cYH8CI0HGGr7bdjo';
@@ -12,7 +16,7 @@ let scrollOnNextPlay = false;
 document.addEventListener('DOMContentLoaded', init);
 
 function init(){
-  // clock + now playing (ทำงานเฉพาะเมื่อมี element)
+  /* ----- Clock ----- */
   const clockEl = document.getElementById('clock');
 
   function tick(){
@@ -26,10 +30,9 @@ function init(){
   }
   if (clockEl){ tick(); setInterval(tick,1000); }
 
-  // ลบคำอธิบายย่อยเก่าถ้ามี
+  /* ----- Remove old subtitle & add Now Playing ----- */
   const subEl = document.querySelector('.sub'); if (subEl) subEl.remove();
 
-  // Now Playing ใต้เวลา (ถ้ามี clock)
   let nowPlayingEl = document.getElementById('now-playing');
   if (!nowPlayingEl && clockEl && clockEl.parentNode){
     nowPlayingEl = document.createElement('div');
@@ -45,17 +48,19 @@ function init(){
     nowPlayingEl.classList.remove('swap'); void nowPlayingEl.offsetWidth;
     nowPlayingEl.classList.add('swap');
   }
-  // expose ให้ฟังก์ชันอื่นใช้
   window.__setNowPlaying = setNowPlaying;
 
-  // สร้าง/ผูกแท็บ แล้วค่อยโหลดช่อง
+  /* ----- Histats under the clock ----- */
+  mountHistats(clockEl);
+
+  /* ----- Tabs / UI ----- */
   enhanceTabButtons();
   wireTabs();
   centerTabsIfPossible();
   window.addEventListener('resize', debounce(centerTabsIfPossible,150));
   window.addEventListener('load', centerTabsIfPossible);
 
-  // โหลดรายการช่อง
+  /* ----- Load channels ----- */
   fetch(CHANNELS_URL,{cache:'no-store'})
     .then(r=>r.json())
     .then(data=>{
@@ -268,4 +273,38 @@ function escapeHtml(s){
   return String(s).replace(/[&<>"'`=\/]/g, c => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;'
   }[c]));
+}
+
+/* ---------- Histats embed (under the clock) ---------- */
+function mountHistats(clockEl){
+  // wrapper directly under now-playing (or under clock if now-playing missing)
+  const anchor = document.getElementById('now-playing') || clockEl || document.body;
+  const wrap = document.createElement('div');
+  wrap.id = 'histats-wrap';
+  wrap.innerHTML = '<div id="histats_counter" aria-hidden="true"></div>';
+  anchor?.after(wrap);
+
+  // set up Histats (force static positioning so it stays inside wrapper)
+  window._Hasync = window._Hasync || [];
+  window._Hasync.push([
+    'Histats.startgif',
+    '1,4970267,4,10045,"div#histatsC{position:static!important;} body>div#histatsC{position:static!important;}"'
+  ]);
+  window._Hasync.push(['Histats.fasi','1']);
+  window._Hasync.push(['Histats.track_hits','']);
+
+  const hs = document.createElement('script');
+  hs.type = 'text/javascript';
+  hs.async = true;
+  hs.src = '//s10.histats.com/js15_gif_as.js';
+  (document.head || document.body).appendChild(hs);
+
+  // Move generated #histatsC into our placeholder once available
+  const moveIntoPlaceholder = () => {
+    const c = document.getElementById('histatsC');
+    const target = document.getElementById('histats_counter');
+    if (c && target && !target.contains(c)) { target.appendChild(c); return; }
+    requestAnimationFrame(moveIntoPlaceholder);
+  };
+  moveIntoPlaceholder();
 }
