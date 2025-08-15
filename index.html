@@ -11,15 +11,17 @@
   <style>
     :root{
       --bg:#0c0c0d; --panel:#141516; --panel-2:#101112; --text:#f2f2f2;
-      --muted:#a0a7b0; --border:#242628; --ring:#22c55e; --maxw:1200px;
-      --tile-min:120px; /* ปรับขนาดการ์ดขั้นต่ำตรงนี้ */
+      --muted:#a0a7b0; --border:#242628; --ring:#22c55e;
+      --maxw:1200px;           /* ความกว้างสูงสุดของคอนเทนต์ */
+      --tile-min:150px;        /* ขนาดการ์ดขั้นต่ำ (ปรับได้) */
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0; background:var(--bg); color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, "Sarabun", Arial;
-      display:grid; grid-template-rows:auto 1fr; overflow-x:hidden;
+      display:flex; flex-direction:column; /* << เปลี่ยนจาก grid เป็น flex */
+      overflow-x:hidden;
     }
 
     /* Header เวลา */
@@ -30,52 +32,53 @@
       backdrop-filter: blur(6px);
     }
     .h-wrap{
-      max-width:var(--maxw); margin:auto; padding:10px 14px;
+      width:min(100%, var(--maxw));  /* << กำหนดกว้างชัดเจน */
+      margin:auto; padding:10px 14px;
       display:grid; justify-items:center; gap:4px;
     }
     .clock{font-weight:700;font-size:clamp(15px,2.3vw,19px);letter-spacing:.2px;text-align:center}
     .sub{font-size:12px;color:var(--muted);text-align:center}
 
-    /* Layout */
-    .app{max-width:var(--maxw); margin-inline:auto; padding:10px 14px}
+    /* โครงหลัก */
+    .app{
+      width:min(100%, var(--maxw));  /* << กำหนดกว้างชัดเจน */
+      margin:auto; padding:10px 14px;
+      flex:1 0 auto;
+    }
     #player{width:100%; aspect-ratio:16/9; border-radius:14px; overflow:hidden}
+    img{max-width:100%; display:block}
+
+    /* รายการช่อง */
     .grid{
       margin-top:14px;
-      display:grid; gap:12px;
+      display:grid; gap:14px;
       grid-template-columns: repeat(auto-fit, minmax(var(--tile-min), 1fr));
       align-items:stretch;
     }
 
-    /* การ์ดช่อง – ดีไซน์ใหม่ */
-    .channel{
-      position:relative; border:0; background:none; padding:0; cursor:pointer;
-      border-radius:18px; isolation:isolate;
-    }
-    .channel::before{ /* วงแหวนไฮไลต์ */
+    /* การ์ดช่อง – ดีไซน์ */
+    .channel{position:relative;border:0;background:none;padding:0;cursor:pointer;border-radius:18px}
+    .channel::before{
       content:""; position:absolute; inset:0; border-radius:18px;
       background:conic-gradient(from 160deg at 50% 50%, #3b82f6, #22c55e, #3b82f6);
       opacity:0; transition:.18s ease; z-index:0;
     }
-    .channel:where(:hover,.active,:focus-visible)::before{opacity:.7; filter:blur(.5px)}
+    .channel:where(:hover,.active,:focus-visible)::before{opacity:.6; filter:blur(.5px)}
     .card{
       position:relative; z-index:1; height:100%;
       background:linear-gradient(180deg,var(--panel),var(--panel-2));
-      border:1px solid var(--border); border-radius:16px; padding:12px 12px 10px;
+      border:1px solid var(--border); border-radius:16px; padding:14px 12px 12px;
       box-shadow:0 8px 20px rgba(0,0,0,.22);
-      display:grid; grid-template-rows:1fr auto; gap:10px; place-items:center;
+      display:grid; grid-template-rows:1fr auto; gap:12px; place-items:center;
       transition:transform .12s ease, border-color .15s ease, box-shadow .15s ease;
     }
     .channel:hover .card{ transform:translateY(-2px); border-color:#2d2f31; }
-    .logo-wrap{
-      width:86px; height:86px; border-radius:14px; background:#0e0f10;
-      display:grid; place-items:center; overflow:hidden;
-    }
-    .logo{max-width:74px; max-height:74px; width:auto; height:auto; display:block}
+    .logo-wrap{width:92px;height:92px;border-radius:14px;background:#0e0f10;display:grid;place-items:center;overflow:hidden}
+    .logo{max-width:80px;max-height:80px}
     .name{
-      font-size:13px; text-align:center; color:#e7e7e7;
-      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
-      overflow:hidden; text-overflow:ellipsis; line-height:1.25;
-      min-height:2.6em; /* สูงเท่ากันทุกใบ */
+      font-size:13px;text-align:center;color:#e7e7e7;
+      display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+      overflow:hidden;text-overflow:ellipsis;line-height:1.25;min-height:2.6em;
     }
     .channel.active .card{ outline:2px solid var(--ring); outline-offset:-2px }
 
@@ -83,12 +86,12 @@
 
     /* Responsive */
     @media (max-width:900px){
-      :root{ --tile-min:110px }
-      .logo-wrap{width:80px;height:80px}.logo{max-width:70px;max-height:70px}
+      :root{ --tile-min:140px }
+      .logo-wrap{width:86px;height:86px}.logo{max-width:76px;max-height:76px}
     }
     @media (max-width:520px){
-      :root{ --tile-min:100px }
-      .logo-wrap{width:72px;height:72px}.logo{max-width:64px;max-height:64px}
+      :root{ --tile-min:120px }
+      .logo-wrap{width:78px;height:78px}.logo{max-width:70px;max-height:70px}
       .name{font-size:12px}
     }
   </style>
@@ -138,8 +141,7 @@
       wrap.innerHTML='';
       channels.forEach((ch,i)=>{
         const btn=document.createElement('button');
-        btn.className='channel';
-        btn.title = ch.name||`ช่อง ${i+1}`;
+        btn.className='channel'; btn.title=ch.name||`ช่อง ${i+1}`;
         btn.innerHTML=`
           <div class="card">
             <div class="logo-wrap">
@@ -165,7 +167,6 @@
       });
       player.once('playAttemptFailed',()=>{ player.setMute(true); player.play(true); });
       player.on('error',e=>console.warn('Player error:',e));
-
       highlight(i);
       try{ localStorage.setItem('lastIndex',String(i)); }catch{}
     }
