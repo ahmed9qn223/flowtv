@@ -1,58 +1,67 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- วางใน <head> -->
-  <link rel="icon" type="image/png" sizes="32x32"
-      href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAElUlEQVR4nO2VbWxTVRjH/+fce3vb3m5rNxgSlkXCENPgFzcVg2...">
-
-  <title>flowTV</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FreeTV</title>
 
   <!-- JW Player -->
   <script src="https://ssl.p.jwpcdn.com/player/v/8.26.0/jwplayer.js"></script>
   <script>
     jwplayer.key = 'XSuP4qMl+9tK17QNb+4+th2Pm9AWgMO/cYH8CI0HGGr7bdjo';
-    // ถ้าคุณมี Cloudflare Worker/Proxy ของตัวเอง ให้ตั้งแบบนี้ (ไม่มีก็ลบทิ้งได้)
+    // ตั้ง proxy ถ้าต้องการ (ลบทิ้งได้ถ้าไม่ใช้)
     // window.PROXY_BASE = 'https://your-worker.workers.dev';
   </script>
 
-  <!-- Analytics (ลบซ้ำออกให้เหลือชุดเดียว) -->
+  <!-- Favicon / App icons – ใส่โลโก้ FLOW TV -->
+  <!-- TODO: แทนที่ URL ด้านล่างด้วยของคุณเอง เช่น /flowtv-64.png, /flowtv-180.png, /flowtv.ico -->
+  <link rel="icon" type="image/png" sizes="32x32" href="LOGO_PNG_64">
+  <link rel="icon" type="image/png" sizes="64x64" href="LOGO_PNG_64">
+  <link rel="apple-touch-icon" sizes="180x180" href="LOGO_PNG_180">
+  <link rel="icon" href="LOGO_ICO"><!-- optional -->
+
+  <!-- Analytics (ลบซ้ำให้เหลือชุดเดียว) -->
+  <script defer data-domain="kitti2025.tiiny.site" src="https://analytics.tiiny.site/js/plausible.js"></script>
+  <script type="text/javascript" src="https://tiiny.host/ad-script.js"></script>
 
   <style>
     * { box-sizing: border-box; }
     body {
       margin: 10px;
       padding: 10px;
-      background-color: #000;
+      background: #000;
       display: flex;
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
-      font-family: system-ui, -apple-system, 'Sarabun', Arial, sans-serif;
+      font-family: system-ui, -apple-system, "Sarabun", Arial, sans-serif;
     }
-
     #player-container {
       width: 100%;
       max-width: 800px;
-      background-color: #111;
+      background: #111;
       padding: 10px;
       border-radius: 12px;
       position: relative;
       box-shadow: 0 6px 24px rgba(0,0,0,.35);
     }
-
     #player { width: 100%; }
 
+    /* โลโก้ FLOW TV ซ้อนมุม */
     #logo-overlay {
       position: absolute;
       top: 10px; right: 35px;
-      width: 28px; height: 28px;
-      opacity: 0.8;
+      width: 64px; height: 64px;
+      opacity: .85;
       transition: opacity .5s ease-in-out;
       pointer-events: none;
     }
-    #logo-overlay img { width: 100%; height: 100%; display: block; }
+    #logo-overlay img {
+      width: 100%; height: 100%; object-fit: contain; display: block;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,.4));
+    }
+
+    .note { color:#bbb; font-size:12px; margin:8px 0 12px; text-align:center; }
 
     .channel-grid {
       width: 100%;
@@ -72,60 +81,42 @@
       padding: 10px 6px;
       transition: transform .08s ease, background .2s ease, border-color .2s ease;
     }
-    .channel:hover { transform: translateY(-1px); background: #181818; border-color: #2a2a2a; }
-    .channel:active { transform: translateY(0); }
-
-    .channel img {
-      width: 44px; height: 44px; object-fit: contain; display: block; margin: 0 auto 6px;
-      filter: drop-shadow(0 2px 2px rgba(0,0,0,.4));
-    }
-    .channel-name {
-      color: #f3f3f3;
-      font-size: 12px;
-      line-height: 1.1;
-      word-break: break-word;
-      min-height: 1.2em;
-    }
-
-    .note {
-      color: #bbb; font-size: 12px; margin: 8px 0 0; text-align: center;
-    }
+    .channel:hover { transform: translateY(-1px); background: #181818; border-color:#2a2a2a; }
+    .channel img { width:44px; height:44px; object-fit:contain; display:block; margin:0 auto 6px; }
+    .channel-name { color:#f3f3f3; font-size:12px; line-height:1.1; word-break:break-word; }
   </style>
 </head>
 <body>
   <div id="player-container">
     <div id="player"></div>
     <div id="logo-overlay">
-      <img src="https://img5.pic.in.th/file/secure-sv1/11zon_resized-3bb1f59abd215d288.png" alt="Logo">
+      <!-- TODO: แทนที่ src ด้วยไฟล์โลโก้ FLOW TV (เช่น /flowtv-64.png) -->
+      <img src="LOGO_PNG_64" alt="FLOW TV">
     </div>
   </div>
 
-  <div class="note">รองรับทั้ง DASH (.mpd + ClearKey) และ HLS (.m3u8) – เล่นได้บนมือถือและคอม</div>
+  <div class="note">รองรับทั้ง DASH (.mpd + ClearKey) และ HLS (.m3u8) – มือถือ/คอม</div>
 
   <div class="channel-grid">
-
-    <!-- DASH + ClearKey -->
+    <!-- ตัวอย่าง DASH + ClearKey -->
     <div class="channel" onclick="changeChannel('https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/5/5.mpd','87db4361f7894655a4656e9c8b935a02','b025a4b950df41158a87cfc8d6f2ac34')">
-      <img loading="lazy" src="https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/ch5new.logo.png" alt="5 HD">
+      <img loading="lazy" src="https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/ch5new.logo.png" alt="5HD">
       <div class="channel-name">5HD</div>
     </div>
-
     <div class="channel" onclick="changeChannel('https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/2/2.mpd','ca20a93cf8e3421dafbd5bdb1990081b','86ae86a7391c481ea93eecdb740f0a14')">
-      <img loading="lazy" src="https://ais-s.ais-vidnt.com/ais/play/origin/LIVE//channelicon/0001.png" alt="NBT">
+      <img loading="lazy" src="https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/0001.png" alt="NBT">
       <div class="channel-name">NBT</div>
     </div>
-
     <div class="channel" onclick="changeChannel('https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/3/3.mpd','4d4426a505f64382a9841155d721cee6','0f4770219ccb4be5836a7517057e51c3')">
       <img loading="lazy" src="https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/0014.png" alt="TPBS">
       <div class="channel-name">TPBS</div>
     </div>
-
     <div class="channel" onclick="changeChannel('https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/4/4.mpd','1e98456bcbea44b7ad05831387e364ef','3d14fd4f9d3149a79b35a7124fccbd67')">
       <img loading="lazy" src="https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/ALTV.PNG" alt="ALTV">
       <div class="channel-name">ALTV</div>
     </div>
 
-    <!-- ยกตัวอย่าง HLS (.m3u8) ที่ไม่ต้องใช้ DRM -->
+    <!-- ตัวอย่าง HLS (.m3u8) -->
     <div class="channel" onclick="changeChannel('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8')">
       <img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/HLS_logo.svg/120px-HLS_logo.svg.png" alt="HLS Demo">
       <div class="channel-name">HLS Demo</div>
@@ -141,97 +132,76 @@
       <div class="channel-name">TPTV</div>
     </div>
 
-    <!-- … (รายการช่องอื่นๆ ของคุณคงเดิมได้เลย) … -->
-
     <!-- แก้พิมพ์ผิด 30mpd -> 30.mpd -->
     <div class="channel" onclick="changeChannel('https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/30/30.mpd')">
       <img loading="lazy" src="https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/MCOT_new.png" alt="McotHD">
       <div class="channel-name">McotHD</div>
     </div>
 
-    <!-- ตัวอย่าง Premium/เด็ก ฯลฯ คงเดิม (ตัดออกเพื่อย่อ) -->
+    <!-- เพิ่มช่องอื่นๆ ของคุณต่อได้ตามต้องการ -->
   </div>
 
   <script>
-    // ---- Helper: เข้าผ่าน Proxy ได้ถ้าตั้ง PROXY_BASE (base64 URL แบบง่าย) ----
+    // ส่งผ่าน proxy ถ้าตั้ง PROXY_BASE ไว้
     function maybeProxy(url) {
       if (!window.PROXY_BASE) return url;
       try {
-        const b64 = btoa(url); // ถ้า Worker ของคุณรูปแบบไม่ใช่ /p/<b64> แก้ตรงนี้
-        return `${window.PROXY_BASE}/p/${b64}`;
-      } catch {
-        return url;
-      }
+        return `${window.PROXY_BASE}/p/${btoa(url)}`; // ปรับให้ตรงกับ worker ของคุณถ้าจำเป็น
+      } catch (e) { return url; }
     }
 
-    // ตรวจจับชนิดสตรีมจากนามสกุล
+    // เดาชนิดจากนามสกุลไฟล์
     function detectType(url) {
       const u = url.split('?')[0].toLowerCase();
       if (u.endsWith('.mpd')) return 'dash';
       if (u.endsWith('.m3u8')) return 'hls';
-      return undefined; // ให้ JW เดาเองถ้าจำเป็น
+      return undefined;
     }
 
-    // ตั้งค่า JW Player
+    // ตั้งค่าเริ่มต้น
     const playerInstance = jwplayer('player');
     playerInstance.setup({
       playlist: [{
         sources: [{
           file: maybeProxy('https://cri-streamer3.cdn.3bbtv.com:8443/3bb/live/5/5.mpd'),
           type: 'dash',
-          drm: {
-            clearkey: {
-              keyId: '87db4361f7894655a4656e9c8b935a02',
-              key:   'b025a4b950df41158a87cfc8d6f2ac34'
-            }
-          },
+          drm: { clearkey: { keyId: '87db4361f7894655a4656e9c8b935a02', key: 'b025a4b950df41158a87cfc8d6f2ac34' } },
           label: '1080HD'
         }]
       }],
       width: '100%',
       aspectratio: '16:9',
-      autostart: 'viewable',   // เริ่มเล่นอัตโนมัติเมื่อเข้าหน้าจอ (ปลอดภัยกับมือถือ)
-      mute: true,              // มือถือจะอนุญาต autoplay เมื่อ mute
-      controls: true,
-      // mobile-friendly
+      autostart: 'viewable',  // autoplay เมื่ออยู่ใน viewport (มือถือโอเคถ้า mute)
+      mute: true,
       stretching: 'uniform',
-      preload: 'metadata'
+      preload: 'metadata',
+      controls: true
     });
 
-    // แสดง/ซ่อนโลโก้ overlay ชั่วคราว
     function flashLogo() {
-      const logoOverlay = document.getElementById('logo-overlay');
-      logoOverlay.style.display = 'block';
-      logoOverlay.style.opacity = '0.8';
-      setTimeout(() => {
-        logoOverlay.style.opacity = '0';
-        setTimeout(() => { logoOverlay.style.display = 'none'; }, 500);
-      }, 4000);
+      const o = document.getElementById('logo-overlay');
+      o.style.display = 'block';
+      o.style.opacity = '.85';
+      setTimeout(() => { o.style.opacity = '0'; setTimeout(() => o.style.display = 'none', 500); }, 4000);
     }
 
-    // เปลี่ยนช่อง — รองรับทั้ง .mpd (DASH + ClearKey) และ .m3u8 (HLS)
+    // เปลี่ยนช่อง – รองรับทั้ง .mpd (มี/ไม่มี ClearKey) และ .m3u8
     function changeChannel(file, keyId, key) {
-      const finalUrl = maybeProxy(file);
       const type = detectType(file);
-
-      const source = { file: finalUrl };
+      const source = { file: maybeProxy(file) };
       if (type) source.type = type;
-
-      // ใส่ DRM เฉพาะตอนเป็น DASH และมีคีย์ครบ
       if (type === 'dash' && keyId && key) {
         source.drm = { clearkey: { keyId, key } };
       }
-
       playerInstance.load([{ sources: [source] }]);
       playerInstance.play();
       flashLogo();
     }
 
-    // Handling error ให้รู้เรื่องเวลาเจอ CORS/Key/ไฟล์ดับ
     playerInstance.on('error', e => {
       console.warn('Player error:', e && e.message ? e.message : e);
       alert('เล่นสตรีมไม่สำเร็จ: ' + (e && e.message ? e.message : 'Unknown error') +
-            '\nหากลิงก์ต้องการ Referer/UA/CORS ให้ลองผ่าน proxy (ตั้ง window.PROXY_BASE)');
+            '\nถ้าสตรีมต้องการ Referer/UA/CORS ให้ตั้ง window.PROXY_BASE ใช้ proxy');
     });
   </script>
 </body>
