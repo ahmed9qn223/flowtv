@@ -2,10 +2,11 @@
   --bg:#0c0c0d; --panel:#141516; --panel-2:#101112; --text:#f2f2f2;
   --muted:#a0a7b0; --border:#242628;
   --maxw:1200px;
-  --tile-min:115px;
+  --tile-min:115px;       /* ปรับขนาดการ์ดขั้นต่ำได้ */
 
-  /* White glow for cards */
-  --glow:#ffffff; --glow-soft:#ffffff;
+  /* สีเรืองแสง (ขาว) */
+  --glow:#ffffff;
+  --glow-soft:#ffffff;
 }
 
 *{box-sizing:border-box}
@@ -17,7 +18,7 @@ body{
   scroll-behavior:smooth;
 }
 
-/* Header */
+/* Header เวลา */
 header{
   position:sticky; top:0; z-index:20;
   border-bottom:1px solid var(--border);
@@ -32,7 +33,7 @@ header{
 .clock{font-weight:700;font-size:clamp(15px,2.3vw,19px);letter-spacing:.2px;text-align:center}
 .sub{font-size:12px;color:var(--muted);text-align:center}
 
-/* Shell */
+/* โครงหลัก */
 .app{width:min(100%,var(--maxw)); margin:auto; padding:10px 14px; flex:1 0 auto}
 #player{width:100%; aspect-ratio:16/9; border-radius:14px; overflow:hidden}
 
@@ -42,9 +43,20 @@ header{
   overflow-x:auto; -webkit-overflow-scrolling:touch;
   padding:10px 0 6px; margin:6px 0 4px;
   scrollbar-gutter:stable both-edges;
+
+  /* ปกติเริ่มที่ซ้าย ถ้ายาวจะได้เลื่อน */
+  justify-content:flex-start;
+
+  /* เลื่อนแล้วสแนปแท็บให้เข้าใกล้กึ่งกลาง */
+  scroll-snap-type:x proximity;
 }
 .tabs::-webkit-scrollbar{height:6px}
 .tabs::-webkit-scrollbar-thumb{background:#2b2d30;border-radius:8px}
+
+/* เมื่อความกว้างรวมของแท็บไม่เกินคอนเทนเนอร์ → จัดกลางทั้งแถว */
+.tabs.tabs--center{ justify-content:center }
+
+/* ปุ่มแท็บ */
 .tab{
   flex:0 0 auto;
   border:1px solid var(--border);
@@ -56,6 +68,9 @@ header{
   line-height:1;
   cursor:pointer;
   transition:background .15s ease, color .15s ease, border-color .15s ease, transform .06s ease;
+
+  /* ให้สแนปที่กึ่งกลางเมื่อเลื่อน */
+  scroll-snap-align:center;
 }
 .tab:hover{border-color:#3a3d41}
 .tab:active{transform:scale(.98)}
@@ -74,18 +89,22 @@ header{
 .grid.fade-in{ animation:gridFade .24s ease both }
 @keyframes gridFade{ from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
 
-/* Channel cards with white glow + ripple */
+/* การ์ดช่อง – ขอบเรืองแสงสีขาว + ripple + ย่อเวลาแตะ */
 .channel{position:relative;border:0;background:none;padding:0;cursor:pointer;border-radius:16px}
+
+/* ออร่ารอบการ์ด */
 .channel::after{
   content:""; position:absolute; inset:-6px; border-radius:20px;
   background: radial-gradient(60% 60% at 50% 50%,
               rgba(255,255,255,.55) 0%,
               transparent 70%);
-  filter: blur(14px); opacity:0; transition:opacity .25s ease;
+  filter: blur(14px); opacity: 0; transition: opacity .25s ease;
   pointer-events:none; z-index:0;
 }
 .channel:hover::after,
-.channel.active::after{opacity:.9; animation:neonPulse 2.4s ease-in-out infinite}
+.channel.active::after{
+  opacity:.9; animation: neonPulse 2.4s ease-in-out infinite;
+}
 
 .card{
   position:relative; z-index:1; height:100%;
@@ -94,19 +113,19 @@ header{
   box-shadow:0 8px 20px rgba(0,0,0,.18);
   display:grid; grid-template-rows:1fr auto; gap:10px; place-items:center;
   transition:transform .12s ease, border-color .15s ease, box-shadow .15s ease;
-  overflow:hidden;
+  overflow:hidden; /* สำหรับ ripple */
 }
 .channel:hover .card{
-  transform:translateY(-1px);
-  border-color:rgba(255,255,255,.7);
+  transform: translateY(-1px);
+  border-color: rgba(255,255,255,.7);
   box-shadow:
     0 0 0 1px rgba(255,255,255,.75) inset,
     0 0 12px rgba(255,255,255,.45),
     0 0 26px rgba(255,255,255,.25);
 }
-.channel:active .card{transform:scale(.985)}
+.channel:active .card{ transform: scale(.985) }
 .channel.active .card{
-  border-color:#fff;
+  border-color: #fff;
   box-shadow:
     0 0 0 1.5px #fff inset,
     0 0 16px rgba(255,255,255,.6),
@@ -128,14 +147,17 @@ header{
 .ripple{
   position:absolute; border-radius:50%; pointer-events:none;
   transform:scale(0); opacity:.35; background:#fff;
-  animation:ripple .55s ease-out; mix-blend-mode:overlay;
+  animation:ripple .55s ease-out;
+  mix-blend-mode:overlay;
 }
 @keyframes ripple{to{transform:scale(8); opacity:0}}
-@keyframes neonPulse{0%{filter:blur(10px);opacity:.55} 50%{filter:blur(15px);opacity:.95} 100%{filter:blur(10px);opacity:.55}}
+@keyframes neonPulse{
+  0%{ filter:blur(10px); opacity:.55 }
+  50%{ filter:blur(15px); opacity:.95 }
+  100%{ filter:blur(10px); opacity:.55 }
+}
 
-.tip{color:var(--muted);font-size:12px;text-align:center;margin:10px 0 8px}
-
-/* Responsive tweaks */
+/* Responsive */
 @media (max-width:900px){
   :root{ --tile-min:108px }
   .logo-wrap{width:72px;height:72px}.logo{max-width:60px;max-height:60px}
