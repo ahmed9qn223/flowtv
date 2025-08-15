@@ -1,16 +1,15 @@
-/* ===================== styles.css (final, top-left histats) ===================== */
+/* ===================== styles.css (final; histats inside header) ===================== */
 :root{
   --bg:#0c0c0d; --panel:#141516; --panel-2:#101112; --text:#f2f2f2;
   --muted:#a0a7b0; --border:#242628; --maxw:1200px;
 
-  /* ช่องทีวีขนาดมาตรฐาน */
-  --tile-min:120px;   /* กว้างขั้นต่ำ */
-  --tile-h:150px;     /* สูงการ์ดคงที่ */
-  --tile-g:12px;      /* ช่องไฟ */
-  --glow:#ffffff;
+  /* Channel tile standard size */
+  --tile-min:120px;    /* min width for a cell */
+  --tile-h:150px;      /* fixed card height */
+  --tile-g:12px;       /* grid gap */
 }
 
-/* Base */
+/* Base / Reset */
 *{box-sizing:border-box}
 html,body{height:100%}
 html,body{background:var(--bg)!important;color:var(--text)}
@@ -19,7 +18,7 @@ body{
   font-family:ui-sans-serif,system-ui,-apple-system,"Sarabun",Arial,"Segoe UI",Tahoma;
 }
 
-/* Reset ปุ่มกันสไตล์ทับ */
+/* Remove default button styles that may conflict */
 button.tab,button.channel{
   appearance:none !important; -webkit-appearance:none !important;
   background:transparent !important; border:0 !important; outline:0;
@@ -35,7 +34,12 @@ header{
   background:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,0));
   backdrop-filter: blur(6px);
 }
-.h-wrap{width:min(100%,var(--maxw));margin:auto;padding:10px 14px;display:grid;justify-items:center;gap:4px}
+.h-wrap{
+  position:relative;                    /* anchor for Histats */
+  width:min(100%,var(--maxw));
+  margin:auto; padding:10px 14px;
+  display:grid; justify-items:center; gap:4px;
+}
 .clock{font-weight:700;font-size:clamp(15px,2.3vw,19px);letter-spacing:.2px;text-align:center}
 .sub{display:none!important}
 .now-playing{
@@ -45,19 +49,20 @@ header{
 .now-playing.swap{animation:npFade .24s ease both}
 @keyframes npFade{from{opacity:0;transform:translateY(4px)}to{opacity:.92;transform:none}}
 
-/* Histats: ตรึงมุมซ้ายบนสุด */
+/* Histats: pinned top-left inside header area */
 #histats_counter{
-  position:fixed; top:6px; left:6px; z-index:99999; line-height:0;
-  pointer-events:auto;
+  position:absolute; top:6px; left:6px; z-index:30;
+  line-height:0; pointer-events:auto;
+  transform:scale(.9); transform-origin:top left;
 }
-#histats_counter #histatsC{ position:static !important } /* บังคับให้กล่องภายในไม่ fixed ซ้ำ */
+#histats_counter #histatsC{ position:static !important }
 #histats_counter img{ opacity:.9; filter:drop-shadow(0 1px 2px rgba(0,0,0,.45)) }
 
 /* App shell / player */
 .app{width:min(100%,var(--maxw));margin:auto;padding:10px 14px;flex:1 0 auto}
 #player{width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden}
 
-/* Tabs (Glass) */
+/* ---- Glass Tabs ---- */
 .tabs{
   position:relative;display:flex;gap:10px;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;
   padding:12px 10px;margin:10px 0 8px;scrollbar-gutter:stable both-edges;justify-content:flex-start;
@@ -103,7 +108,7 @@ header{
 .tab[data-filter="สารคดี"]{--accent:#06b6d4}
 .tab[data-filter="เพลง"]{--accent:#a855f7}
 
-/* Grid ช่องทีวี (เท่ากันทุกหมวด) */
+/* ---- Channel Grid (uniform) ---- */
 .grid{
   margin-top:10px;display:grid;gap:var(--tile-g);
   grid-template-columns:repeat(auto-fit,minmax(var(--tile-min),1fr));
