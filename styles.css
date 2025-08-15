@@ -1,26 +1,26 @@
+/* ============ FIX: มาตรฐานขนาดการ์ด ============ */
 :root{
-  /* ปรับมาตรฐาน/สัดส่วนการ์ดได้ตรงนี้ */
-  --tile-min:115px;          /* ความกว้างขั้นต่ำของช่อง */
-  --tile-ratio: 9 / 10;      /* อัตราส่วน กว้าง/สูง ของการ์ด */
-  --tile-g:12px;             /* ระยะห่างช่อง */
+  /* ปรับได้ตามใจ: กว้างขั้นต่ำ & สูงมาตรฐานของการ์ด */
+  --tile-min: 120px;
+  --tile-h:   150px;   /* ความสูงการ์ด */
+  --tile-g:   12px;
 }
 
-/* ====== Grid คงขนาดเท่ากันทุกหมวด ====== */
+/* กริดให้ช่องเท่ากันทุกหมวด */
 .grid{
   margin-top:10px;
   display:grid;
   gap:var(--tile-g);
   grid-template-columns: repeat(auto-fit, minmax(var(--tile-min), 1fr));
-  align-items:stretch;       /* ดึงความสูงเท่ากัน */
+  align-items:start;   /* อย่าดึงยืดความสูง */
 }
 .grid.fade-in{ animation:gridFade .24s ease both }
 @keyframes gridFade{ from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
 
-/* การ์ดช่อง: ล็อกอัตราส่วนให้เท่ากัน */
+/* การ์ดช่อง: ใช้ความสูงคงที่ (ไม่ใช้ aspect-ratio แล้ว) */
 .ch-card{
   position:relative; z-index:1;
-  aspect-ratio: var(--tile-ratio);   /* << ทำให้สูงเท่ากัน */
-  height:auto;                       /* ให้คำนวณจาก aspect-ratio */
+  height: var(--tile-h);
   background:linear-gradient(180deg,var(--panel),var(--panel-2));
   border:1px solid var(--border);
   border-radius:14px;
@@ -31,18 +31,27 @@
   overflow:hidden;
 }
 
-/* โลโก้คงสัดส่วน ไม่ทำให้สูงเพิ่ม */
-.logo-wrap{width:78px;height:78px;border-radius:12px;background:#0e0f10;display:grid;place-items:center;overflow:hidden}
-.logo{max-width:66px;max-height:66px}
-
-/* ชื่อช่องตัดไว้ 2 บรรทัดเพื่อกันสูงไม่เท่ากัน */
-.name{
-  font-size:12.5px;text-align:center;color:#e7e7e7;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-  overflow:hidden;text-overflow:ellipsis;line-height:1.25;min-height:2.5em;
+/* โลโก้สเกลตามความสูงการ์ด (พอดี ไม่ดันสูงเกิน) */
+.logo-wrap{
+  width:  calc(var(--tile-h) * 0.52);
+  height: calc(var(--tile-h) * 0.52);
+  border-radius:12px;
+  background:#0e0f10;
+  display:grid; place-items:center; overflow:hidden;
+}
+.logo{
+  max-width:  calc(var(--tile-h) * 0.44);
+  max-height: calc(var(--tile-h) * 0.44);
 }
 
-/* Hover/Active/Selected เดิมยังใช้ได้ */
+/* ชื่อช่องจำกัด 2 บรรทัด กันการ์ดกระโดดสูง */
+.name{
+  font-size:12.5px; text-align:center; color:#e7e7e7;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  overflow:hidden; text-overflow:ellipsis; line-height:1.25; min-height:2.5em;
+}
+
+/* เอฟเฟกต์เดิมยังใช้ได้ */
 .channel:hover .ch-card{
   transform:translateY(-1px);
   border-color:rgba(255,255,255,.7);
@@ -54,13 +63,11 @@
   box-shadow:0 0 0 1.5px #fff inset, 0 0 16px rgba(255,255,255,.6), 0 0 32px rgba(255,255,255,.35);
 }
 
-/* ขนาดมาตรฐานบนมือถือ */
-@media (max-width:900px){
-  :root{ --tile-min:108px; --tile-ratio: 9 / 11; }
-  .logo-wrap{width:72px;height:72px}.logo{max-width:60px;max-height:60px}
+/* ขนาดมาตรฐานบนจอเล็ก */
+@media (max-width: 900px){
+  :root{ --tile-min:108px; --tile-h:140px }
 }
-@media (max-width:520px){
-  :root{ --tile-min:100px; --tile-ratio: 9 / 12; }
-  .logo-wrap{width:66px;height:66px}.logo{max-width:54px;max-height:54px}
-  .name{font-size:12px}
+@media (max-width: 520px){
+  :root{ --tile-min:100px; --tile-h:130px }
+  .name{ font-size:12px }
 }
