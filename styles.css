@@ -1,15 +1,10 @@
-/* ===================== styles.css (final; histats inside header) ===================== */
+/* ====== base/theme ยังคงเหมือนเดิมของคุณ ====== */
 :root{
   --bg:#0c0c0d; --panel:#141516; --panel-2:#101112; --text:#f2f2f2;
   --muted:#a0a7b0; --border:#242628; --maxw:1200px;
-
-  /* Channel tile standard size */
-  --tile-min:120px;    /* min width for a cell */
-  --tile-h:150px;      /* fixed card height */
-  --tile-g:12px;       /* grid gap */
+  --tile-min:120px; --tile-h:150px; --tile-g:12px;
 }
 
-/* Base / Reset */
 *{box-sizing:border-box}
 html,body{height:100%}
 html,body{background:var(--bg)!important;color:var(--text)}
@@ -18,12 +13,10 @@ body{
   font-family:ui-sans-serif,system-ui,-apple-system,"Sarabun",Arial,"Segoe UI",Tahoma;
 }
 
-/* Remove default button styles that may conflict */
 button.tab,button.channel{
-  appearance:none !important; -webkit-appearance:none !important;
-  background:transparent !important; border:0 !important; outline:0;
-  padding:0 !important; margin:0 !important; display:block; line-height:1 !important;
-  box-shadow:none !important; color:inherit;
+  appearance:none !important;-webkit-appearance:none !important;background:transparent !important;
+  border:0 !important;outline:0;padding:0 !important;margin:0 !important;display:block;line-height:1 !important;
+  box-shadow:none !important;color:inherit;
 }
 button.tab:focus,button.channel:focus{outline:none}
 
@@ -35,7 +28,7 @@ header{
   backdrop-filter: blur(6px);
 }
 .h-wrap{
-  position:relative;                    /* anchor for Histats */
+  position:relative;                    /* <<< ให้เป็นกรอบอ้างอิง */
   width:min(100%,var(--maxw));
   margin:auto; padding:10px 14px;
   display:grid; justify-items:center; gap:4px;
@@ -49,11 +42,11 @@ header{
 .now-playing.swap{animation:npFade .24s ease both}
 @keyframes npFade{from{opacity:0;transform:translateY(4px)}to{opacity:.92;transform:none}}
 
-/* Histats: pinned top-left inside header area */
+/* === Histats: ด้านขวาบน ภายใน header === */
 #histats_counter{
-  position:absolute; top:6px; left:6px; z-index:30;
+  position:absolute; top:6px; right:6px; z-index:30;
   line-height:0; pointer-events:auto;
-  transform:scale(.9); transform-origin:top left;
+  transform:scale(.9); transform-origin:top right;   /* ย่อเล็กน้อยให้ไม่ชนขอบ */
 }
 #histats_counter #histatsC{ position:static !important }
 #histats_counter img{ opacity:.9; filter:drop-shadow(0 1px 2px rgba(0,0,0,.45)) }
