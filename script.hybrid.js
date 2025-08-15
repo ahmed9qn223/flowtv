@@ -22,7 +22,7 @@
   async function sendHeartbeat(){
     if (!window.currentChannelId) return;
     const url = `${API_BASE}/heartbeat.php?channel_id=${encodeURIComponent(window.currentChannelId)}&viewer_id=${encodeURIComponent(viewerId)}`;
-    try { await fetch(url, { method:'GET', mode:'cors', cache:'no-store' }); } catch(e){}
+    try { await fetch(url, { method:'GET', mode:'no-cors', cache:'no-store' }); } catch(e){}
   }
 
   async function refreshViewerCount(){
