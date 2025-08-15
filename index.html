@@ -10,7 +10,8 @@
 
   <!-- JW Player -->
   <script src="https://ssl.p.jwpcdn.com/player/v/8.26.0/jwplayer.js"></script>
-  <!-- (ถ้าคุณมี Proxy Worker ให้ปลดบรรทัดนี้และใส่ URL ของคุณ) -->
+
+  <!-- Optional: Proxy Worker -->
   <!-- <script>window.PROXY_BASE = 'https://your-worker.workers.dev';</script> -->
 
   <!-- App -->
@@ -27,6 +28,17 @@
   <main class="app">
     <div id="player" aria-label="ตัวเล่นวิดีโอ"></div>
 
+    <!-- Tabs (Filter) -->
+    <nav id="tabs" class="tabs" role="tablist" aria-label="กรองช่อง">
+      <button class="tab" role="tab" aria-selected="true"  data-filter="ทั้งหมด">ทั้งหมด</button>
+      <button class="tab" role="tab" aria-selected="false" data-filter="ข่าว">ข่าว</button>
+      <button class="tab" role="tab" aria-selected="false" data-filter="บันเทิง">บันเทิง</button>
+      <button class="tab" role="tab" aria-selected="false" data-filter="กีฬา">กีฬา</button>
+      <button class="tab" role="tab" aria-selected="false" data-filter="สารคดี">สารคดี</button>
+      <button class="tab" role="tab" aria-selected="false" data-filter="เพลง">เพลง</button>
+    </nav>
+
+    <!-- Grid -->
     <section class="grid" id="channel-list" aria-live="polite"></section>
     <div class="tip">แตะโลโก้ช่องเพื่อเล่น • บางอุปกรณ์อาจเริ่มแบบปิดเสียงก่อน</div>
   </main>
