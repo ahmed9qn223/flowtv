@@ -31,71 +31,134 @@ header{
 }
 .clock{font-weight:700;font-size:clamp(15px,2.3vw,19px);letter-spacing:.2px;text-align:center}
 
-/* optional: now-playing text under clock (if you use it) */
+/* ซ่อนข้อความย่อยเดิม ถ้า index.html ยังมีอยู่ */
+.sub{ display:none !important }
+
+/* Now Playing ใต้เวลา */
 .now-playing{
-  margin-top:2px;font-size:clamp(13px,2vw,16px);font-weight:600;color:var(--text);
-  text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.92
+  margin-top:2px;
+  font-size:clamp(13px,2vw,16px);
+  font-weight:600; color:var(--text);
+  text-align:center; max-width:100%;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:.92;
 }
-.now-playing.swap{animation:npFade .24s ease both}
-@keyframes npFade{from{opacity:0;transform:translateY(4px)}to{opacity:.92;transform:none}}
+.now-playing.swap{ animation:npFade .24s ease both }
+@keyframes npFade{ from{opacity:0; transform:translateY(4px)} to{opacity:.92; transform:none} }
 
 /* Shell */
 .app{width:min(100%,var(--maxw)); margin:auto; padding:10px 14px; flex:1 0 auto}
 #player{width:100%; aspect-ratio:16/9; border-radius:14px; overflow:hidden}
 
-/* ---------------- TAB BAR (icon tiles) ---------------- */
+/* ================= GLASSMORPHISM TABS ================= */
 .tabs{
-  display:flex; gap:10px; align-items:center;
+  position: relative;
+  display:flex; gap:12px; align-items:center;
   overflow-x:auto; -webkit-overflow-scrolling:touch;
-  padding:12px 0 6px; margin:8px 0 4px;
+  padding:14px 10px; margin:10px 0 6px;
   scrollbar-gutter:stable both-edges;
-  justify-content:flex-start;                /* when overflow */
+  justify-content:flex-start;                /* scrollable when overflow */
   scroll-snap-type:x proximity;
+  z-index: 0;
 }
 .tabs::-webkit-scrollbar{height:6px}
 .tabs::-webkit-scrollbar-thumb{background:#2b2d30;border-radius:8px}
-.tabs.tabs--center{ justify-content:center } /* when they fit */
 
-/* button wrapper */
+/* soft blurred gradient strip behind tabs */
+.tabs::before{
+  content:"";
+  position:absolute; inset:0;
+  background:
+    radial-gradient(120% 80% at 10% 0%, rgba(99,102,241,.25) 0%, transparent 45%),
+    radial-gradient(120% 80% at 90% 100%, rgba(168,85,247,.25) 0%, transparent 45%),
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.0));
+  filter: blur(22px);
+  opacity: .8;
+  pointer-events:none;
+  z-index:-1;
+}
+
+/* center when they fit */
+.tabs.tabs--center{ justify-content:center }
+
+/* Button wrapper */
 .tab{
+  position: relative;
   flex:0 0 auto; background:none; border:0; padding:0;
   cursor:pointer; outline:none;
+  scroll-snap-align:center;
 }
-.tab:focus-visible .tab-card{ box-shadow:0 0 0 2px rgba(255,255,255,.9), 0 10px 24px rgba(0,0,0,.35) }
 
-/* colorful tile */
+/* Glass tile */
 .tab-card{
-  width: clamp(90px, 16vw, 112px);
-  height: clamp(80px, 14vw, 102px);
+  width: clamp(92px, 16vw, 120px);
+  height: clamp(82px, 15vw, 106px);
   border-radius:16px;
   display:grid; grid-template-rows:auto auto; justify-items:center; align-content:center; gap:8px;
-  color:#fff;
-  box-shadow:0 0 0 1px rgba(255,255,255,.15) inset;
-  transform:translateZ(0) scale(1);
-  transition: transform .16s ease, box-shadow .22s ease, filter .18s ease;
-}
-.tab:hover .tab-card{ filter:brightness(1.06) }
-.tab:active .tab-card{ transform:scale(.98) }
-.tab[aria-selected="true"] .tab-card{
-  transform:scale(1.06);
+
+  /* glassmorphism */
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.18);
   box-shadow:
-    0 0 0 1px rgba(255,255,255,.25) inset,
-    0 10px 24px rgba(0,0,0,.38);
+    0 0 0 .5px rgba(255,255,255,.25) inset,
+    0 6px 18px rgba(0,0,0,.28);
+  backdrop-filter: blur(10px) saturate(1.15);
+  -webkit-backdrop-filter: blur(10px) saturate(1.15);
+
+  color:#fff;
+  transform: translateZ(0) scale(1);
+  transition: transform .16s ease, box-shadow .22s ease, filter .18s ease, border-color .2s ease;
+}
+.tab:hover .tab-card{ filter:brightness(1.08) }
+.tab:active .tab-card{ transform:scale(.985) }
+
+/* Focus ring */
+.tab:focus-visible .tab-card{
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.9),
+    0 10px 24px rgba(0,0,0,.35);
 }
 
-/* icon + label */
+/* Selected tile (pop) */
+.tab[aria-selected="true"] .tab-card{
+  transform:scale(1.04);
+  border-color: rgba(255,255,255,.35);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.35) inset,
+    0 12px 28px rgba(0,0,0,.38);
+}
+
+/* Icon + Label */
 .tab-icon svg{ width:28px; height:28px; display:block; color:#fff }
 .tab-label{ font-weight:700; font-size:12px; letter-spacing:.2px }
 
-/* per-category vibrant colors */
-.tab[data-filter="ทั้งหมด"] .tab-card{ background:#6366f1 } /* indigo */
-.tab[data-filter="ข่าว"]     .tab-card{ background:#ef4444 } /* red */
-.tab[data-filter="บันเทิง"]  .tab-card{ background:#f59e0b } /* amber */
-.tab[data-filter="กีฬา"]     .tab-card{ background:#22c55e } /* green */
-.tab[data-filter="สารคดี"]   .tab-card{ background:#06b6d4 } /* cyan */
-.tab[data-filter="เพลง"]     .tab-card{ background:#a855f7 } /* purple */
+/* Vibrant accent underline on selected */
+.tab{ --accent:#ffffff } /* fallback; overridden per category */
+.tab::after{
+  content:"";
+  position:absolute; left:50%; bottom:-2px;
+  width:56%; height:3px; border-radius:3px;
+  background: var(--accent);
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--accent) 65%, transparent);
+  transform: translateX(-50%) scaleX(0);
+  transform-origin:center;
+  opacity:0;
+  transition: transform .22s ease, opacity .22s ease, width .22s ease;
+  pointer-events:none;
+}
+.tab[aria-selected="true"]::after{
+  transform: translateX(-50%) scaleX(1);
+  opacity:1;
+}
 
-/* Grid */
+/* Per-category accent colors */
+.tab[data-filter="ทั้งหมด"]{ --accent:#60a5fa } /* sky */
+.tab[data-filter="ข่าว"]    { --accent:#ef4444 } /* red */
+.tab[data-filter="บันเทิง"] { --accent:#f59e0b } /* amber */
+.tab[data-filter="กีฬา"]    { --accent:#22c55e } /* green */
+.tab[data-filter="สารคดี"]  { --accent:#06b6d4 } /* cyan */
+.tab[data-filter="เพลง"]    { --accent:#a855f7 } /* purple */
+
+/* ================= Grid ================= */
 .grid{
   margin-top:10px;
   display:grid; gap:12px;
@@ -105,7 +168,7 @@ header{
 .grid.fade-in{ animation:gridFade .24s ease both }
 @keyframes gridFade{ from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
 
-/* ---------------- Channel cards (unchanged, white glow) ---------------- */
+/* ============ Channel card (white glow + ripple) ============ */
 .channel{position:relative;border:0;background:none;padding:0;cursor:pointer;border-radius:16px}
 .channel::after{
   content:""; position:absolute; inset:-6px; border-radius:20px;
