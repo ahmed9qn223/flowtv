@@ -4,8 +4,12 @@
     "category": "LOKAL ID",
     "logo": "https://raw.githubusercontent.com/iplist-dev/Ch/refs/heads/main/trans7.png",
     "url": "https://atemeshield1-voe.sysln.id/live/eds/Trans7HD/mpd/Trans7HD.mpd",
-    "drm": { "type": "clearkey", "kid": "16e50b43a8fe4f9d8ed63a436161a28b", "key": "aa556111c986ba164a582811fb0d8c30" },
+    "drm": { "type": "clearkey",
+      "kid": "16e50b43a8fe4f9d8ed63a436161a28b",
+      "key": "aa556111c986ba164a582811fb0d8c30"
+    },
     "ua": "ExoPlayerDemo/2.15.1 (Linux; Android 13) ExoPlayerLib/2.15.1",
+    "referer": "https://atemeshield1-voe.sysln.id/live/eds/Trans7HD/mpd/",
     "proxy": true
   }
 }
