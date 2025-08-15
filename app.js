@@ -29,10 +29,13 @@ fetch(CHANNELS_URL,{cache:'no-store'})
   .then(r=>r.json())
   .then(data=>{
     channels = Array.isArray(data) ? data : (data.channels || []);
+
     wireTabs();
-    render();                          // initial
+    centerTabsIfPossible();      // <- จัดกึ่งกลางถ้ากว้างพอ
+    render();
+
     const start = Math.max(0, Math.min(channels.length-1, parseInt(localStorage.getItem('lastIndex')||'0',10)));
-    if (channels.length) play(start,{scroll:false}); // do not scroll on first render
+    if (channels.length) play(start,{scroll:false}); // ครั้งแรกไม่เลื่อน
   })
   .catch(e=>{
     console.error('โหลด channels.json ไม่สำเร็จ:', e);
@@ -41,18 +44,19 @@ fetch(CHANNELS_URL,{cache:'no-store'})
 
 // ===== Tabs: events & accessibility =====
 function wireTabs(){
-  const tabs = document.querySelectorAll('#tabs .tab');
+  const tabsRoot = document.getElementById('tabs');
+  if(!tabsRoot) return;
 
   // click to switch
-  document.getElementById('tabs').addEventListener('click', (e)=>{
+  tabsRoot.addEventListener('click', (e)=>{
     const btn = e.target.closest('.tab'); if(!btn) return;
     setActiveTab(btn.dataset.filter);
   });
 
   // arrow key navigation (L/R)
-  document.getElementById('tabs').addEventListener('keydown', (e)=>{
+  tabsRoot.addEventListener('keydown', (e)=>{
     if(e.key!=='ArrowRight' && e.key!=='ArrowLeft') return;
-    const arr = Array.from(tabs);
+    const arr = Array.from(tabsRoot.querySelectorAll('.tab'));
     const idx = arr.findIndex(b=>b.getAttribute('aria-selected')==='true');
     let next = e.key==='ArrowRight' ? idx+1 : idx-1;
     if(next<0) next = arr.length-1;
@@ -76,10 +80,23 @@ function setActiveTab(name){
 
   // re-render with fade-in
   const grid = document.getElementById('channel-list');
-  grid.classList.remove('fade-in'); void grid.offsetWidth; // reflow to restart animation
+  grid.classList.remove('fade-in'); void grid.offsetWidth; // รีสตาร์ทแอนิเมชัน
   render();
   grid.classList.add('fade-in');
 }
+
+// ===== Center tabs only when they don't overflow =====
+function centerTabsIfPossible(){
+  const el = document.getElementById('tabs');
+  if (!el) return;
+  const canCenter = el.scrollWidth <= el.clientWidth + 1; // กัน float rounding
+  el.classList.toggle('tabs--center', canCenter);
+}
+function debounce(fn, wait=150){
+  let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), wait); };
+}
+window.addEventListener('load', centerTabsIfPossible);
+window.addEventListener('resize', debounce(centerTabsIfPossible, 150));
 
 // ===== Filtering =====
 function filterChannels(list, tab){
@@ -119,6 +136,7 @@ function render(){
         <div class="name">${escapeHtml(ch.name||'ช่อง')}</div>
       </div>`;
 
+    // ripple + เล่น + เลื่อนขึ้นไปยังตัวเล่น
     btn.addEventListener('click', (e) => {
       makeRipple(e, btn.querySelector('.card'));
       scrollOnNextPlay = true;
