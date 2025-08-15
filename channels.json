@@ -1,0 +1,15 @@
+
+{
+  "demo_hls": {
+    "name": "Demo HLS",
+    "category": "ทั่วไป",
+    "logo": "https://dummyimage.com/320x180/333/fff&text=HLS",
+    "url": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+  },
+  "demo_dash_clearkey": {
+    "name": "Demo DASH (no DRM)",
+    "category": "ทั่วไป",
+    "logo": "https://dummyimage.com/320x180/333/fff&text=DASH",
+    "url": "https://dash.akamaized.net/envivio/EnvivioDash3/manifest.mpd"
+  }
+}
