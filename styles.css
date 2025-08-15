@@ -1,3 +1,4 @@
+```css
 :root{
   --bg:#0c0c0d; --panel:#141516; --panel-2:#101112; --text:#f2f2f2;
   --muted:#a0a7b0; --border:#242628;
@@ -31,7 +32,7 @@ header{
 }
 .clock{font-weight:700;font-size:clamp(15px,2.3vw,19px);letter-spacing:.2px;text-align:center}
 
-/* ซ่อนข้อความย่อยเดิม ถ้า index.html ยังมีอยู่ */
+/* ซ่อนข้อความย่อยเดิม ถ้ามี */
 .sub{ display:none !important }
 
 /* Now Playing ใต้เวลา */
@@ -49,16 +50,20 @@ header{
 .app{width:min(100%,var(--maxw)); margin:auto; padding:10px 14px; flex:1 0 auto}
 #player{width:100%; aspect-ratio:16/9; border-radius:14px; overflow:hidden}
 
-/* ================= GLASSMORPHISM TABS ================= */
+/* ================= GLASSMORPHISM TABS (anti-flicker) ================= */
 .tabs{
   position: relative;
   display:flex; gap:10px; align-items:center;
   overflow-x:auto; -webkit-overflow-scrolling:touch;
   padding:12px 10px; margin:10px 0 8px;
   scrollbar-gutter:stable both-edges;
-  justify-content:flex-start;                /* scrollable when overflow */
+  justify-content:flex-start;
   scroll-snap-type:x proximity;
-  z-index: 0;
+  z-index:0;
+
+  /* ลดการกระพริบทั้งแถบ */
+  transform:translateZ(0);
+  backface-visibility:hidden;
 }
 .tabs::-webkit-scrollbar{height:6px}
 .tabs::-webkit-scrollbar-thumb{background:#2b2d30;border-radius:8px}
@@ -71,7 +76,7 @@ header{
     radial-gradient(120% 80% at 90% 100%, rgba(168,85,247,.22) 0%, transparent 45%),
     linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.0));
   filter: blur(20px);
-  opacity: .8; pointer-events:none; z-index:-1;
+  opacity:.8; pointer-events:none; z-index:-1;
 }
 
 /* center when they fit */
@@ -79,53 +84,46 @@ header{
 
 /* Button wrapper */
 .tab{
-  position: relative;
-  flex:0 0 auto; background:none; border:0; padding:0;
-  cursor:pointer; outline:none;
-  scroll-snap-align:center;
+  position:relative; flex:0 0 auto; background:none; border:0; padding:0;
+  cursor:pointer; outline:none; scroll-snap-align:center;
+  contain:paint;                               /* จำกัดรีเพนท์ในกรอบปุ่ม */
+  -webkit-tap-highlight-color:transparent;
 }
 
-/* Glass tile (ขนาดเล็กลง + ป้องกันกระพริบ) */
+/* Glass tile (เล็กลง + ไม่ใช้ filter เพื่อกันกระพริบ) */
 .tab-card{
-  width: clamp(86px, 14vw, 104px);
-  height: clamp(74px, 12.5vw, 90px);
-  border-radius:14px;
+  width: clamp(82px, 13.5vw, 98px);
+  height: clamp(70px, 12vw, 86px);
+  border-radius:12px;
   display:grid; grid-template-rows:auto auto; justify-items:center; align-content:center; gap:6px;
 
-  /* glassmorphism */
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.18);
-  box-shadow: 0 0 0 .5px rgba(255,255,255,.22) inset, 0 6px 16px rgba(0,0,0,.26);
-  backdrop-filter: blur(10px) saturate(1.1);
-  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  /* ผิวแก้วบาง ๆ (ไม่มี blur บนปุ่ม) */
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);      /* ขอบบางลง */
+  box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 6px 14px rgba(0,0,0,.22);
 
   color:#fff;
-  transform: translateZ(0) scale(1);
+  transform:translateZ(0) scale(1);
   backface-visibility:hidden;
-  will-change: transform, box-shadow;
-  transition: transform .16s ease, box-shadow .22s ease, border-color .2s ease;
+  will-change:transform;
+  transition:transform .16s ease;               /* ไม่ transition box-shadow/filter */
 }
-/* ไม่ใช้ filter:brightness() เพื่อเลี่ยง "แสงกระพริบ" */
-.tab:hover .tab-card{ border-color:rgba(255,255,255,.26); box-shadow:0 0 0 .5px rgba(255,255,255,.26) inset, 0 8px 18px rgba(0,0,0,.3) }
+.tab:hover .tab-card{ transform:translateZ(0) scale(1.015) }
 .tab:active .tab-card{ transform:scale(.985) }
 
 /* Focus ring */
 .tab:focus-visible .tab-card{
-  box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 10px 22px rgba(0,0,0,.34);
+  box-shadow:0 0 0 2px rgba(255,255,255,.85), 0 10px 20px rgba(0,0,0,.30);
 }
 
-/* Selected tile (pop นิดเดียวเพื่อไม่สั่น) */
-.tab[aria-selected="true"] .tab-card{
-  transform:scale(1.03);
-  border-color: rgba(255,255,255,.34);
-  box-shadow: 0 0 0 1px rgba(255,255,255,.34) inset, 0 12px 24px rgba(0,0,0,.36);
-}
+/* Selected tile (pop เล็กน้อยเพื่อเสถียรภาพ) */
+.tab[aria-selected="true"] .tab-card{ transform:scale(1.03) }
 
-/* Icon + Label */
-.tab-icon svg{ width:26px; height:26px; display:block; color:#fff }
+/* Icon + Label ขนาดพอดีกรอบใหม่ */
+.tab-icon svg{ width:24px; height:24px; display:block; color:#fff }
 .tab-label{ font-weight:700; font-size:11.5px; letter-spacing:.2px }
 
-/* Vibrant accent underline on selected (เสถียรขึ้น) */
+/* Vibrant accent underline on selected (ใช้ 3D transform) */
 .tab{ --accent:#ffffff } /* fallback; overridden per category */
 .tab::after{
   content:""; position:absolute; left:50%; bottom:-2px;
@@ -134,10 +132,8 @@ header{
   box-shadow: 0 2px 10px color-mix(in srgb, var(--accent) 60%, transparent);
   transform: translate3d(-50%,0,0) scaleX(0);
   transform-origin:center;
-  opacity:0;
-  will-change: transform, opacity;
-  transition: transform .22s ease, opacity .22s ease, width .22s ease;
-  pointer-events:none;
+  opacity:0; will-change:transform,opacity;
+  transition:transform .22s ease, opacity .22s ease;
 }
 .tab[aria-selected="true"]::after{
   transform: translate3d(-50%,0,0) scaleX(1);
@@ -204,6 +200,13 @@ header{
 @keyframes ripple{to{transform:scale(8); opacity:0}}
 @keyframes neonPulse{0%{filter:blur(10px);opacity:.55}50%{filter:blur(15px);opacity:.95}100%{filter:blur(10px);opacity:.55}}
 
+/* ลดแอนิเมชันบนเครื่องที่ตั้งค่า reduce motion */
+@media (prefers-reduced-motion: reduce){
+  .tab-card{ transition:none }
+  .tab:hover .tab-card,
+  .tab[aria-selected="true"] .tab-card{ transform:none }
+}
+
 /* Responsive */
 @media (max-width:900px){
   :root{ --tile-min:108px }
@@ -214,3 +217,4 @@ header{
   .logo-wrap{width:66px;height:66px}.logo{max-width:54px;max-height:54px}
   .name{font-size:12px}
 }
+```
