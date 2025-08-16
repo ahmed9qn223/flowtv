@@ -2,20 +2,19 @@
 <html lang="th">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>FLOWTV</title>
-  
+
+  <!-- Favicon (SVG data URI) -->
   <link rel="icon"
-  href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%2300D1FF'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='Arial, sans-serif' font-size='60' fill='white'%3ETV%3C/text%3E%3C/svg%3E">
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%2300D1FF'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='Arial, sans-serif' font-size='60' fill='white'%3ETV%3C/text%3E%3C/svg%3E">
 
   <!-- Styles -->
   <link rel="stylesheet" href="styles.css" />
 
   <!-- JW Player -->
   <script src="https://ssl.p.jwpcdn.com/player/v/8.26.0/jwplayer.js"></script>
-
-  <!-- Optional: Proxy Worker -->
-  <!-- <script>window.PROXY_BASE = 'https://your-worker.workers.dev';</script> -->
+  <script>jwplayer.key = 'XSuP4qMl+9tK17QNb+4+th2Pm9AWgMO/cYH8CI0HGGr7bdjo';</script>
 
   <!-- App -->
   <script defer src="app.js"></script>
@@ -25,25 +24,145 @@
     <div class="h-wrap">
       <div id="clock" class="clock">--</div>
       <div class="sub">อัปเดตอัตโนมัติ • เวลาเขตกรุงเทพฯ (UTC+7)</div>
+      <!-- ชื่อช่องที่กำลังเล่น (อัปเดตโดย app.js) -->
+      <div id="nowPlayingHeader" style="font-weight:800; letter-spacing:.2px;">--</div>
+
+      <!-- Histats badge (มุมขวา) -->
+      <div id="histats_counter"></div>
+      <!-- Histats START (ด้านขวาถัดจากเวลา) -->
+      <script type="text/javascript">
+        var _Hasync = _Hasync || [];
+        _Hasync.push(['Histats.startgif', '1,4970267,4,10024,"div#histatsC {position: absolute;top:0px;right:0px;}body>div#histatsC {position: fixed;}"']);
+        _Hasync.push(['Histats.fasi', '1']);
+        _Hasync.push(['Histats.track_hits', '']);
+        (function () {
+          var hs = document.createElement('script'); hs.type = 'text/javascript'; hs.async = true;
+          hs.src = ('//s10.histats.com/js15_giftop_as.js');
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(hs);
+        })();
+      </script>
+      <noscript>
+        <style type="text/css">
+          div#histatsC {position:absolute;top:0px;right:0px;}
+          body>div#histatsC {position:fixed;}
+        </style>
+        <a href="/" target="_blank" rel="noopener">
+          <div id="histatsC"><img border="0" src="//s4is.histats.com/stats/i/4970267.gif?4970267&103" alt="histats"></div>
+        </a>
+      </noscript>
+      <!-- Histats END -->
     </div>
   </header>
 
   <main class="app">
+    <!-- Player -->
     <div id="player" aria-label="ตัวเล่นวิดีโอ"></div>
 
-    <!-- Tabs (Filter) -->
+    <!-- Tabs (หมวดหมู่) -->
     <nav id="tabs" class="tabs" role="tablist" aria-label="กรองช่อง">
-      <button class="tab" role="tab" aria-selected="true"  data-filter="ทั้งหมด">ทั้งหมด</button>
-      <button class="tab" role="tab" aria-selected="false" data-filter="ข่าว">ข่าว</button>
-      <button class="tab" role="tab" aria-selected="false" data-filter="บันเทิง">บันเทิง</button>
-      <button class="tab" role="tab" aria-selected="false" data-filter="กีฬา">กีฬา</button>
-      <button class="tab" role="tab" aria-selected="false" data-filter="สารคดี">สารคดี</button>
-      <button class="tab" role="tab" aria-selected="false" data-filter="เพลง">เพลง</button>
+      <!-- ทั้งหมด -->
+      <button class="tab" role="tab" aria-selected="true" data-filter="ทั้งหมด">
+        <span class="tab-card">
+          <span class="tab-icon" aria-hidden="true">
+            <!-- grid icon -->
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M4 4h6v6H4V4zm0 10h6v6H4v-6zm10-10h6v6h-6V4zm0 10h6v6h-6v-6z"/>
+            </svg>
+          </span>
+          <span class="tab-label">ทั้งหมด</span>
+        </span>
+      </button>
+
+      <!-- ข่าว -->
+      <button class="tab" role="tab" aria-selected="false" data-filter="ข่าว">
+        <span class="tab-card">
+          <span class="tab-icon" aria-hidden="true">
+            <!-- news icon -->
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M4 5h14a2 2 0 0 1 2 2v11H6a2 2 0 0 1-2-2V5zm2 4h10v2H6V9zm0 4h10v2H6v-2zM3 18h18v2H3v-2z"/>
+            </svg>
+          </span>
+          <span class="tab-label">ข่าว</span>
+        </span>
+      </button>
+
+      <!-- บันเทิง -->
+      <button class="tab" role="tab" aria-selected="false" data-filter="บันเทิง">
+        <span class="tab-card">
+          <span class="tab-icon" aria-hidden="true">
+            <!-- star icon -->
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="m12 17.27 6.18 3.73-1.64-7.03L21 9.24l-7.19-.61L12 2 10.19 8.63 3 9.24l4.46 4.73L5.82 21z"/>
+            </svg>
+          </span>
+          <span class="tab-label">บันเทิง</span>
+        </span>
+      </button>
+
+      <!-- กีฬา -->
+      <button class="tab" role="tab" aria-selected="false" data-filter="กีฬา">
+        <span class="tab-card">
+          <span class="tab-icon" aria-hidden="true">
+            <!-- sport ball icon -->
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2Zm-1 2.07V7H7a7.98 7.98 0 0 1 4-2.93ZM5.05 8H9v3H5.64A8.03 8.03 0 0 1 5.05 8ZM5.64 13H9v3H5.05a8.03 8.03 0 0 1 .59-3ZM7 17h4v2.93A7.98 7.98 0 0 1 7 17Zm6 2.93V17h4a7.98 7.98 0 0 1-4 2.93ZM18.95 16H15v-3h3.36c.26.95.4 1.96.59 3ZM18.36 11H15V8h3.95c-.19 1.04-.33 2.05-.59 3ZM17 7h-4V4.07A7.98 7.98 0 0 1 17 7Z"/>
+            </svg>
+          </span>
+          <span class="tab-label">กีฬา</span>
+        </span>
+      </button>
+
+      <!-- สารคดี -->
+      <button class="tab" role="tab" aria-selected="false" data-filter="สารคดี">
+        <span class="tab-card">
+          <span class="tab-icon" aria-hidden="true">
+            <!-- book icon -->
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18 2H8a2 2 0 0 0-2 2v16a2 2 0 0 1 2-2h10v2h2V4a2 2 0 0 0-2-2Zm0 14H8V4h10v12Z"/>
+            </svg>
+          </span>
+          <span class="tab-label">สารคดี</span>
+        </span>
+      </button>
+
+      <!-- เพลง -->
+      <button class="tab" role="tab" aria-selected="false" data-filter="เพลง">
+        <span class="tab-card">
+          <span class="tab-icon" aria-hidden="true">
+            <!-- music note icon -->
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 3v10.55A4 4 0 1 1 10 17V7h8V3h-6Z"/>
+            </svg>
+          </span>
+          <span class="tab-label">เพลง</span>
+        </span>
+      </button>
+
+      <!-- หนัง -->
+      <button class="tab" role="tab" aria-selected="false" data-filter="หนัง">
+        <span class="tab-card">
+          <span class="tab-icon" aria-hidden="true">
+            <!-- film icon -->
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm0 2v3h3V6H4Zm0 5v3h3v-3H4Zm0 5v3h3v-3H4Zm13-10v3h3V6h-3Zm0 5v3h3v-3h-3Zm0 5v3h3v-3h-3Z"/>
+            </svg>
+          </span>
+          <span class="tab-label">หนัง</span>
+        </span>
+      </button>
     </nav>
 
-    <!-- Grid -->
+    <!-- แบนเนอร์แจ้งเตือน (เติมโดย app.js เมื่อมีเหตุ) -->
+    <div class="notice-host" id="noticeHost"></div>
+
+    <!-- Grid ช่อง -->
     <section class="grid" id="channel-list" aria-live="polite"></section>
+
     <div class="tip">แตะโลโก้ช่องเพื่อเล่น • บางอุปกรณ์อาจเริ่มแบบปิดเสียงก่อน</div>
   </main>
+
+  <noscript>
+    ต้องเปิดใช้งาน JavaScript เพื่อใช้งานเว็บไซต์นี้
+  </noscript>
 </body>
 </html>
