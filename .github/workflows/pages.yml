@@ -1,0 +1,93 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - 'version.json'   # กันไม่ให้คอมมิตไฟล์นี้แล้วเวิร์กโฟลว์รันซ้ำ
+  workflow_dispatch:
+
+permissions:
+  contents: write       # ต้องเป็น write เพื่อให้ push กลับเข้า repo ได้
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0      # ให้ push กลับได้ง่ายขึ้น
+
+      - name: Generate version.json (appVersion + dataVersion)
+        shell: bash
+        run: |
+          set -e
+          APP_VER="$(date -u +"%Y.%m.%d")-$(git rev-parse --short HEAD)"
+          COMMIT="$(git rev-parse --short HEAD)"
+          UPDATED="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+
+          touch _tmp_data_concat.json
+          [ -f channels.json ]   && cat channels.json   >> _tmp_data_concat.json
+          [ -f categories.json ] && cat categories.json >> _tmp_data_concat.json
+
+          if [ -s _tmp_data_concat.json ]; then
+            DATA_HASH="$(tr -d '\n\r\t ' < _tmp_data_concat.json | sha256sum | cut -c1-12)"
+            DATA_VER="${DATA_HASH}"
+          else
+            DATA_VER="${APP_VER}"
+          fi
+          rm -f _tmp_data_concat.json
+
+          cat > version.json <<JSON
+          {
+            "appVersion": "${APP_VER}",
+            "dataVersion": "${DATA_VER}",
+            "commit": "${COMMIT}",
+            "updatedAt": "${UPDATED}"
+          }
+          JSON
+
+          echo "== version.json =="
+          cat version.json
+
+      # (ออปชัน) commit version.json กลับเข้า repo ให้เห็นในหน้าไฟล์
+      - name: Commit version.json back to repo
+        if: ${{ github.ref == 'refs/heads/main' }}
+        shell: bash
+        run: |
+          set -e
+          if [[ -n $(git status --porcelain version.json) ]]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add version.json
+            git commit -m "chore(ci): update version.json [skip ci]"
+            git push
+          else
+            echo "version.json unchanged, skip commit"
+          fi
+
+      - name: Disable Jekyll
+        run: echo > .nojekyll
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .   # ถ้าเว็บอยู่ในโฟลเดอร์ย่อย ให้เปลี่ยน path ตรงนี้
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
