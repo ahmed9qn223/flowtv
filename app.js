@@ -1,9 +1,9 @@
-/* ======================= app.js (remove "ทั้งหมด", add "หนัง") ======================= */
+/* ======================= app.js (no "ทั้งหมด" + add "หนัง") ======================= */
 const CHANNELS_URL = 'channels.json';
 const TIMEZONE = 'Asia/Bangkok';
 
-/* ลำดับแท็บใหม่: เอา "ทั้งหมด" ออก และเพิ่ม "หนัง" */
-const TABS = ['ข่าว','บันเทิง','กีฬา','สารคดี','เพลง','หนัง'];
+/* ลำดับแท็บใหม่: ไม่มี "ทั้งหมด" */
+const TABS = ['ข่าว', 'บันเทิง', 'กีฬา', 'สารคดี', 'เพลง', 'หนัง'];
 
 const SWITCH_OUT_MS = 140;
 const STAGGER_STEP_MS = 22;
@@ -11,7 +11,7 @@ const STAGGER_STEP_MS = 22;
 try { jwplayer.key = jwplayer.key || 'XSuP4qMl+9tK17QNb+4+th2Pm9AWgMO/cYH8CI0HGGr7bdjo'; } catch {}
 
 let channels = [];
-let currentFilter = TABS[0];   // เริ่มที่แท็บแรก
+let currentFilter = TABS[0];
 let currentIndex = -1;
 let scrollOnNextPlay = false;
 
@@ -31,7 +31,7 @@ function init(){
   }
   if(clockEl){ tick(); setInterval(tick,1000); }
 
-  // now playing under time
+  // now playing text (ใต้เวลา)
   let nowEl = document.getElementById('now-playing');
   if(!nowEl && clockEl && clockEl.parentNode){
     nowEl = document.createElement('div');
@@ -47,21 +47,21 @@ function init(){
     nowEl.classList.remove('swap'); void nowEl.offsetWidth; nowEl.classList.add('swap');
   };
 
-  // Histats right
+  // Histats badge (ขวาบน)
   mountHistatsTopRight();
 
-  // tabs
-  enhanceTabButtons(); wireTabs(); centerTabsIfPossible();
+  // สร้างแท็บใหม่จาก TABS (ล้างของเดิม -> ไม่มี "ทั้งหมด")
+  buildTabs();
+  centerTabsIfPossible();
   addEventListener('resize', debounce(centerTabsIfPossible,150));
   addEventListener('load', centerTabsIfPossible);
 
-  // load channels
+  // โหลดช่อง
   fetch(CHANNELS_URL,{cache:'no-store'})
     .then(r=>r.json())
     .then(data=>{
       channels = Array.isArray(data) ? data : (data.channels || []);
-      // default render: ใช้แท็บแรกเสมอ
-      setActiveTab(TABS[0]);
+      setActiveTab(TABS[0]); // โชว์แท็บแรก
       const start = Math.max(0, Math.min(channels.length-1, parseInt(localStorage.getItem('lastIndex')||'0',10)));
       if(channels.length) play(start,{scroll:false}); else window.__setNowPlaying('');
     })
@@ -73,20 +73,25 @@ function init(){
 }
 
 /* ---------- Tabs ---------- */
-function enhanceTabButtons(){
+function buildTabs(){
   const root = document.getElementById('tabs'); if(!root) return;
-  root.querySelectorAll('.tab').forEach(btn=>{
-    if(btn.querySelector('.tab-card')) return;
-    const label = (btn.textContent || btn.dataset.filter || '').trim();
+  root.innerHTML = '';
+  TABS.forEach(name=>{
+    const btn = document.createElement('button');
+    btn.className = 'tab';
+    btn.dataset.filter = name;
+    btn.setAttribute('aria-selected','false');
     btn.innerHTML = `
       <span class="tab-card">
-        <span class="tab-icon" aria-hidden="true">${getIconSVG(btn.dataset.filter)}</span>
-        <span class="tab-label">${label}</span>
+        <span class="tab-icon" aria-hidden="true">${getIconSVG(name)}</span>
+        <span class="tab-label">${name}</span>
       </span>`;
+    root.appendChild(btn);
   });
+
+  wireTabs(root);
 }
-function wireTabs(){
-  const root = document.getElementById('tabs'); if(!root) return;
+function wireTabs(root){
   root.addEventListener('click', e=>{
     const b = e.target.closest('.tab'); if(!b) return;
     setActiveTab(b.dataset.filter);
@@ -101,11 +106,11 @@ function wireTabs(){
   });
 }
 function setActiveTab(name){
-  // ถ้าชื่อไม่ได้อยู่ใน TABS ให้ fallback เป็นแท็บแรก
   if(!TABS.includes(name)) name = TABS[0];
   currentFilter = name;
 
-  document.querySelectorAll('#tabs .tab').forEach(b=>{
+  const root = document.getElementById('tabs');
+  root.querySelectorAll('.tab').forEach(b=>{
     const sel = b.dataset.filter===name;
     b.setAttribute('aria-selected', sel ? 'true':'false');
     if(sel) b.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'});
@@ -131,7 +136,7 @@ function getIconSVG(n){
     case 'กีฬา': return `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="${s}" stroke-width="${w}"/><path d="M3 12h18" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/><path d="M12 3a9 9 0 0 1 0 18" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/><path d="M12 3a9 9 0 0 0 0 18" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/></svg>`;
     case 'สารคดี': return `<svg viewBox="0 0 24 24" fill="none"><path d="M4 6h7a3 3 0 0 1 3 3v11H7a3 3 0 0 0-3 3V6z" stroke="${s}" stroke-width="${w}" stroke-linejoin="round"/><path d="M13 6h7a3 3 0 0 1 3 3v11h-7a3 3 0 0 0-3 3V6z" stroke="${s}" stroke-width="${w}" stroke-linejoin="round"/></svg>`;
     case 'เพลง': return `<svg viewBox="0 0 24 24" fill="none"><path d="M14 4v9.5a2.5 2.5 0 1 1-2-2.45V8l-4 1v7a2 2 0 1 1-2-2V8.5l8-2.5Z" fill="${s}"/></svg>`;
-    case 'หนัง': return `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="12" rx="2" stroke="${s}" stroke-width="${w}"/><path d="M7 6v12M17 6v12" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/></svg>`; /* ฟิล์ม/คลัปเปอร์ */
+    case 'หนัง': return `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="12" rx="2" stroke="${s}" stroke-width="${w}"/><path d="M7 6v12M17 6v12" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/></svg>`;
     default: return `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="${s}" stroke-width="${w}"/></svg>`;
   }
 }
@@ -139,38 +144,40 @@ function debounce(fn,wait=150){let t;return(...a)=>{clearTimeout(t);t=setTimeout
 
 /* ---------- Filter & Category guess ---------- */
 function filterChannels(list, tab){
-  // ไม่มี "ทั้งหมด" แล้ว — คืนเฉพาะหมวดที่เลือก
+  // คืนเฉพาะหมวดที่เลือก
   return list.filter(ch => (ch.category || guessCategory(ch)) === tab);
 }
 
 function guessCategory(ch){
   const s = `${ch.name||''} ${ch.logo||''}`.toLowerCase();
+  const src = (ch.src || ch.file || '').toLowerCase();
 
-  // 1) หนัง — ใส่ไว้ก่อนบันเทิงเพื่อไม่ให้โดนจัดเข้าบันเทิง
-  if (/(^|\s)(hbo|cinemax|mono\s?29\s?plus|mono29\s?plus|mono29plus|3bb\s?asian|movie|movies|film|true\s?film|cinema|signature|hits|family)(\s|$)/.test(s))
+  // ===== หนัง =====
+  // ชื่อ/โลโก้ที่พบบ่อย
+  if (/(^|\s)(hbo|cinemax|mono\s?29\s?plus|mono29plus|3bb\s?asian|movie|movies|film|true\s?film|signature|hits|family)(\s|$)/.test(s))
     return 'หนัง';
+  // ช่องตัวเลขที่เป็นหนัง: 101, 103–107, 109
+  if (/(\/101\/|\/103\/|\/104\/|\/105\/|\/106\/|\/107\/|\/109\/)/.test(src)) return 'หนัง';
+  // ไฟล์โลโก้ที่มักเป็นหนัง (เช่น R_0148/0149/0150/0151/0147)
+  if (/(r_0148|0149|0150|0151|0147)/.test(s)) return 'หนัง';
 
-  // 2) ข่าว
-  if (/(ข่าว|tnn|nation|thairath|nbt|pbs|jkn|workpoint\s?news|voice|spring)/.test(s))
-    return 'ข่าว';
+  // ===== ข่าว =====
+  if (/(ข่าว|tnn|nation|thairath|nbt|pbs|jkn|workpoint\s?news)/.test(s)) return 'ข่าว';
 
-  // 3) กีฬา
-  if (/(sport|กีฬา|t\s?sports|3bb\s?sports|bein|true\s?sport|pptv\s?hd\s?36)/.test(s))
-    return 'กีฬา';
+  // ===== กีฬา =====
+  if (/(sport|กีฬา|t\s?sports|3bb\s?sports|bein|true\s?sport|pptv\s?hd\s?36)/.test(s)) return 'กีฬา';
 
-  // 4) สารคดี
-  if (/(สารคดี|discovery|animal|nat.?geo|history|documentary|bbc\s?earth|cgnc)/.test(s))
-    return 'สารคดี';
+  // ===== สารคดี =====
+  if (/(สารคดี|discovery|animal|nat.?geo|history|documentary|bbc\s?earth)/.test(s)) return 'สารคดี';
 
-  // 5) เพลง
-  if (/(เพลง|music|mtv|channel\s?v|music\s?hits)/.test(s))
-    return 'เพลง';
+  // ===== เพลง =====
+  if (/(เพลง|music|mtv|channel\s?v|music\s?hits)/.test(s)) return 'เพลง';
 
-  // อื่นๆ
+  // อื่น ๆ จัดเข้าบันเทิง
   return 'บันเทิง';
 }
 
-/* ---------- Render Grid (stagger) ---------- */
+/* ---------- Render Grid ---------- */
 function render(opt={withEnter:false}){
   const wrap = document.getElementById('channel-list'); 
   if(!wrap) return;
@@ -185,9 +192,8 @@ function render(opt={withEnter:false}){
     btn.className = 'channel';
     btn.title = ch.name || 'ช่อง';
 
-    // ติดป้าย category ลง DOM เพื่อใช้ CSS (โลโก้ยาวของ "หนัง")
     const cat = (ch.category || guessCategory(ch));
-    btn.dataset.category = cat;
+    btn.dataset.category = cat;                           // ใช้ styling เฉพาะหมวด
     btn.dataset.globalIndex = String(channels.indexOf(ch));
 
     btn.innerHTML = `
@@ -227,7 +233,7 @@ function render(opt={withEnter:false}){
 }
 function computeGridCols(container){
   const cs = getComputedStyle(document.documentElement);
-  const tileW = parseFloat(cs.getPropertyValue('--tile-w')) || parseFloat(cs.getPropertyValue('--tile-min')) || 110;
+  const tileW = parseFloat(cs.getPropertyValue('--tile-w')) || 110;
   const gap   = parseFloat(cs.getPropertyValue('--tile-g')) || 10;
   const fullW = container.clientWidth;
   return Math.max(1, Math.floor((fullW + gap) / (tileW + gap)));
