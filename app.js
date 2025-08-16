@@ -1,30 +1,24 @@
-/* ======================= app.js (final – stagger category switch) ======================= */
-/* - JW Player (HLS/DASH + ClearKey) + no title overlay
-   - Glass tabs, equal-size channel grid
-   - Histats counter on right inside header (.h-wrap), mode 10024
-   - Category switch effect: exit -> render -> enter with stagger
-*/
-
+/* ======================= app.js (remove "ทั้งหมด", add "หนัง") ======================= */
 const CHANNELS_URL = 'channels.json';
 const TIMEZONE = 'Asia/Bangkok';
-const TABS = ['ทั้งหมด','ข่าว','บันเทิง','กีฬา','สารคดี','เพลง'];
 
-const SWITCH_OUT_MS = 140;   // ระยะเวลาช่วง "ออก"
-const STAGGER_STEP_MS = 22;  // ดีเลย์ต่อใบตอน "เข้า"
+/* ลำดับแท็บใหม่: เอา "ทั้งหมด" ออก และเพิ่ม "หนัง" */
+const TABS = ['ข่าว','บันเทิง','กีฬา','สารคดี','เพลง','หนัง'];
 
-// ใส่คีย์ถ้ายังไม่ได้ตั้งใน HTML
+const SWITCH_OUT_MS = 140;
+const STAGGER_STEP_MS = 22;
+
 try { jwplayer.key = jwplayer.key || 'XSuP4qMl+9tK17QNb+4+th2Pm9AWgMO/cYH8CI0HGGr7bdjo'; } catch {}
 
 let channels = [];
-let currentFilter = 'ทั้งหมด';
+let currentFilter = TABS[0];   // เริ่มที่แท็บแรก
 let currentIndex = -1;
 let scrollOnNextPlay = false;
 
 document.addEventListener('DOMContentLoaded', init);
 
-/* -------------------- INIT -------------------- */
 function init(){
-  // Clock
+  // clock
   const clockEl = document.getElementById('clock');
   function tick(){
     if(!clockEl) return;
@@ -37,8 +31,7 @@ function init(){
   }
   if(clockEl){ tick(); setInterval(tick,1000); }
 
-  // Now Playing (ใต้เวลา)
-  const oldSub = document.querySelector('.sub'); if (oldSub) oldSub.remove();
+  // now playing under time
   let nowEl = document.getElementById('now-playing');
   if(!nowEl && clockEl && clockEl.parentNode){
     nowEl = document.createElement('div');
@@ -54,20 +47,21 @@ function init(){
     nowEl.classList.remove('swap'); void nowEl.offsetWidth; nowEl.classList.add('swap');
   };
 
-  // Histats ด้านขวาใน header
+  // Histats right
   mountHistatsTopRight();
 
-  // Tabs
+  // tabs
   enhanceTabButtons(); wireTabs(); centerTabsIfPossible();
   addEventListener('resize', debounce(centerTabsIfPossible,150));
   addEventListener('load', centerTabsIfPossible);
 
-  // Load channels
+  // load channels
   fetch(CHANNELS_URL,{cache:'no-store'})
     .then(r=>r.json())
     .then(data=>{
       channels = Array.isArray(data) ? data : (data.channels || []);
-      render(); // first render (no enter anim)
+      // default render: ใช้แท็บแรกเสมอ
+      setActiveTab(TABS[0]);
       const start = Math.max(0, Math.min(channels.length-1, parseInt(localStorage.getItem('lastIndex')||'0',10)));
       if(channels.length) play(start,{scroll:false}); else window.__setNowPlaying('');
     })
@@ -78,7 +72,7 @@ function init(){
     });
 }
 
-/* -------------------- TABS (Glass) -------------------- */
+/* ---------- Tabs ---------- */
 function enhanceTabButtons(){
   const root = document.getElementById('tabs'); if(!root) return;
   root.querySelectorAll('.tab').forEach(btn=>{
@@ -107,10 +101,10 @@ function wireTabs(){
   });
 }
 function setActiveTab(name){
-  if(!TABS.includes(name)) name='ทั้งหมด';
+  // ถ้าชื่อไม่ได้อยู่ใน TABS ให้ fallback เป็นแท็บแรก
+  if(!TABS.includes(name)) name = TABS[0];
   currentFilter = name;
 
-  // ไฮไลต์แท็บ
   document.querySelectorAll('#tabs .tab').forEach(b=>{
     const sel = b.dataset.filter===name;
     b.setAttribute('aria-selected', sel ? 'true':'false');
@@ -119,11 +113,7 @@ function setActiveTab(name){
 
   const grid = document.getElementById('channel-list'); 
   if(!grid) return;
-
-  // 1) เล่นเอฟเฟกต์ "ออก"
   grid.classList.add('switch-out');
-
-  // 2) หลังจากออกเสร็จ -> render ใหม่ + เล่น "เข้า"
   setTimeout(()=>{
     grid.classList.remove('switch-out');
     render({ withEnter:true });
@@ -136,32 +126,51 @@ function centerTabsIfPossible(){
 function getIconSVG(n){
   const s='currentColor', w=2;
   switch(n){
-    case 'ทั้งหมด': return `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" fill="${s}"/><rect x="14" y="3" width="7" height="7" rx="1" fill="${s}"/><rect x="3" y="14" width="7" height="7" rx="1" fill="${s}"/><rect x="14" y="14" width="7" height="7" rx="1" fill="${s}"/></svg>`;
     case 'ข่าว': return `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="14" height="14" rx="2" stroke="${s}" stroke-width="${w}"/><path d="M7 9h8M7 13h8M7 17h8" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/></svg>`;
     case 'บันเทิง': return `<svg viewBox="0 0 24 24" fill="none"><path d="M12 4l2.7 5.5 6 .9-4.4 4.3 1 6-5.3-2.8-5.3 2.8 1-6L3.3 10.4l6-.9L12 4z" stroke="${s}" stroke-width="${w}" stroke-linejoin="round"/></svg>`;
     case 'กีฬา': return `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="${s}" stroke-width="${w}"/><path d="M3 12h18" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/><path d="M12 3a9 9 0 0 1 0 18" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/><path d="M12 3a9 9 0 0 0 0 18" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/></svg>`;
     case 'สารคดี': return `<svg viewBox="0 0 24 24" fill="none"><path d="M4 6h7a3 3 0 0 1 3 3v11H7a3 3 0 0 0-3 3V6z" stroke="${s}" stroke-width="${w}" stroke-linejoin="round"/><path d="M13 6h7a3 3 0 0 1 3 3v11h-7a3 3 0 0 0-3 3V6z" stroke="${s}" stroke-width="${w}" stroke-linejoin="round"/></svg>`;
     case 'เพลง': return `<svg viewBox="0 0 24 24" fill="none"><path d="M14 4v9.5a2.5 2.5 0 1 1-2-2.45V8l-4 1v7a2 2 0 1 1-2-2V8.5l8-2.5Z" fill="${s}"/></svg>`;
+    case 'หนัง': return `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="12" rx="2" stroke="${s}" stroke-width="${w}"/><path d="M7 6v12M17 6v12" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/></svg>`; /* ฟิล์ม/คลัปเปอร์ */
     default: return `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="${s}" stroke-width="${w}"/></svg>`;
   }
 }
 function debounce(fn,wait=150){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),wait)}}
 
-/* -------------------- DATA / FILTER -------------------- */
+/* ---------- Filter & Category guess ---------- */
 function filterChannels(list, tab){
-  if(tab==='ทั้งหมด') return list;
+  // ไม่มี "ทั้งหมด" แล้ว — คืนเฉพาะหมวดที่เลือก
   return list.filter(ch => (ch.category || guessCategory(ch)) === tab);
 }
+
 function guessCategory(ch){
-  const s=(ch.name||'').toLowerCase();
-  if (/(ข่าว|tnn|nation|thairath|nbt|pbs|jkn|spring|voice)/.test(s)) return 'ข่าว';
-  if (/(sport|กีฬา|t\s?sports|3bb\s?sports|bein|true\s?sport|pptv\s?hd\s?36)/.test(s)) return 'กีฬา';
-  if (/(สารคดี|discovery|animal|nat.?geo|history|documentary|bbc earth|cgnc)/.test(s)) return 'สารคดี';
-  if (/(เพลง|music|mtv|channel\s?v|music\s?hits)/.test(s)) return 'เพลง';
+  const s = `${ch.name||''} ${ch.logo||''}`.toLowerCase();
+
+  // 1) หนัง — ใส่ไว้ก่อนบันเทิงเพื่อไม่ให้โดนจัดเข้าบันเทิง
+  if (/(^|\s)(hbo|cinemax|mono\s?29\s?plus|mono29\s?plus|mono29plus|3bb\s?asian|movie|movies|film|true\s?film|cinema|signature|hits|family)(\s|$)/.test(s))
+    return 'หนัง';
+
+  // 2) ข่าว
+  if (/(ข่าว|tnn|nation|thairath|nbt|pbs|jkn|workpoint\s?news|voice|spring)/.test(s))
+    return 'ข่าว';
+
+  // 3) กีฬา
+  if (/(sport|กีฬา|t\s?sports|3bb\s?sports|bein|true\s?sport|pptv\s?hd\s?36)/.test(s))
+    return 'กีฬา';
+
+  // 4) สารคดี
+  if (/(สารคดี|discovery|animal|nat.?geo|history|documentary|bbc\s?earth|cgnc)/.test(s))
+    return 'สารคดี';
+
+  // 5) เพลง
+  if (/(เพลง|music|mtv|channel\s?v|music\s?hits)/.test(s))
+    return 'เพลง';
+
+  // อื่นๆ
   return 'บันเทิง';
 }
 
-/* -------------------- RENDER GRID (with stagger) -------------------- */
+/* ---------- Render Grid (stagger) ---------- */
 function render(opt={withEnter:false}){
   const wrap = document.getElementById('channel-list'); 
   if(!wrap) return;
@@ -169,14 +178,18 @@ function render(opt={withEnter:false}){
   const list = filterChannels(channels, currentFilter);
   wrap.innerHTML = '';
 
-  // คอลัมน์คร่าว ๆ เพื่อคำนวณดีเลย์แบบทแยง
   const cols = computeGridCols(wrap);
 
   list.forEach((ch, i) => {
     const btn = document.createElement('button');
     btn.className = 'channel';
     btn.title = ch.name || 'ช่อง';
+
+    // ติดป้าย category ลง DOM เพื่อใช้ CSS (โลโก้ยาวของ "หนัง")
+    const cat = (ch.category || guessCategory(ch));
+    btn.dataset.category = cat;
     btn.dataset.globalIndex = String(channels.indexOf(ch));
+
     btn.innerHTML = `
       <div class="ch-card">
         <div class="logo-wrap">
@@ -187,14 +200,12 @@ function render(opt={withEnter:false}){
         <div class="name">${escapeHtml(ch.name||'ช่อง')}</div>
       </div>`;
 
-    // ripple + เล่นช่อง
     btn.addEventListener('click', e=>{
       makeRipple(e, btn.querySelector('.ch-card'));
       scrollOnNextPlay = true;
       playByChannel(ch);
     });
 
-    // order ดีเลย์แบบ wave-diagonal
     const row = Math.floor(i / Math.max(cols,1));
     const col = i % Math.max(cols,1);
     const order = row + col;
@@ -203,13 +214,10 @@ function render(opt={withEnter:false}){
     wrap.appendChild(btn);
   });
 
-  // กำหนด stagger ต่อใบ
   wrap.style.setProperty('--stagger', `${STAGGER_STEP_MS}ms`);
 
-  // เล่น "เข้า" ถ้าระบุ
   if(opt.withEnter){
     wrap.classList.add('switch-in');
-    // คำนวณเวลาสูงสุดแบบคร่าว ๆ แล้วลบคลาสออก เพื่อครั้งต่อไปจะเล่นได้อีก
     const maxOrder = Math.max(...Array.from(wrap.children).map(el => +getComputedStyle(el).getPropertyValue('--i') || 0), 0);
     const total = (maxOrder * STAGGER_STEP_MS) + 420;
     setTimeout(()=> wrap.classList.remove('switch-in'), Math.min(total, 1200));
@@ -225,28 +233,18 @@ function computeGridCols(container){
   return Math.max(1, Math.floor((fullW + gap) / (tileW + gap)));
 }
 
-/* -------------------- PLAYER (no title overlay) -------------------- */
-function playByChannel(ch){
-  const i = channels.indexOf(ch);
-  if(i>=0) play(i);
-}
+/* ---------- Player ---------- */
+function playByChannel(ch){ const i = channels.indexOf(ch); if(i>=0) play(i); }
 function play(i, opt={scroll:true}){
   const ch = channels[i]; if(!ch) return;
   currentIndex = i;
 
   const player = jwplayer('player').setup({
-    playlist:[{
-      image: ch.poster || ch.logo || undefined,
-      sources: [buildSource(ch)]
-    }],
-    width:'100%',
-    aspectratio:'16:9',
-    autostart:true,
+    playlist:[{ image: ch.poster || ch.logo || undefined, sources: [buildSource(ch)] }],
+    width:'100%', aspectratio:'16:9', autostart:true,
     mute:/iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
-    preload:'metadata',
-    playbackRateControls:true,
-    displaytitle:false,
-    displaydescription:false
+    preload:'metadata', playbackRateControls:true,
+    displaytitle:false, displaydescription:false
   });
 
   player.once('playAttemptFailed',()=>{ player.setMute(true); player.play(true); });
@@ -258,8 +256,6 @@ function play(i, opt={scroll:true}){
 
   if((opt.scroll ?? true) && scrollOnNextPlay){ scrollToPlayer(); scrollOnNextPlay=false; }
 }
-
-/* ---- Build JW Source ---- */
 function buildSource(ch){
   const url = buildUrlWithProxyIfNeeded(ch);
   const t = (ch.type || detectType(url) || 'auto').toLowerCase();
@@ -271,12 +267,7 @@ function buildSource(ch){
   }else if(t==='hls'){ src.type='hls'; }
   return src;
 }
-function detectType(u){
-  const p=(u||'').split('?')[0].toLowerCase();
-  if(p.endsWith('.m3u8')) return 'hls';
-  if(p.endsWith('.mpd'))  return 'dash';
-  return 'auto';
-}
+function detectType(u){ u=(u||'').split('?')[0].toLowerCase(); if(u.endsWith('.m3u8'))return'hls'; if(u.endsWith('.mpd'))return'dash'; return'auto'; }
 function buildUrlWithProxyIfNeeded(ch){
   const raw = ch.src || ch.file || '';
   if (window.PROXY_BASE && ch.proxy){
@@ -287,7 +278,7 @@ function buildUrlWithProxyIfNeeded(ch){
   return raw;
 }
 
-/* -------------------- UI HELPERS -------------------- */
+/* ---------- UI helpers ---------- */
 function makeRipple(event, container){
   if(!container) return;
   const r = container.getBoundingClientRect();
@@ -320,42 +311,21 @@ function escapeHtml(s){
   }[c]));
 }
 
-/* -------------------- HISTATS (RIGHT in header) -------------------- */
+/* ---------- Histats in header ---------- */
 function mountHistatsTopRight(){
-  // ใช้ .h-wrap เป็น anchor ให้ชิดขวาใน header (อยู่แถวเดียวกับเวลา)
-  const anchor = document.querySelector('.h-wrap') ||
-                 document.querySelector('header') ||
-                 document.body;
-
+  const anchor = document.querySelector('.h-wrap') || document.querySelector('header') || document.body;
   let holder = document.getElementById('histats_counter');
-  if (!holder) {
-    holder = document.createElement('div');
-    holder.id = 'histats_counter';
-    anchor.appendChild(holder);
-  } else if (holder.parentElement !== anchor) {
-    anchor.appendChild(holder);
-  }
+  if (!holder) { holder = document.createElement('div'); holder.id = 'histats_counter'; anchor.appendChild(holder); }
+  else if (holder.parentElement !== anchor) { anchor.appendChild(holder); }
 
-  // ใช้โหมด 10024 (ริบบอนขวา) และบังคับไม่ให้สคริปต์ fixed ทั้งหน้า
   window._Hasync = window._Hasync || [];
-  window._Hasync.push([
-    'Histats.startgif',
-    '1,4970267,4,10024,"div#histatsC {position: absolute; top:0; right:0;} body>div#histatsC {position: static;}"'
-  ]);
+  window._Hasync.push(['Histats.startgif','1,4970267,4,10024,"div#histatsC {position: absolute; top:0; right:0;} body>div#histatsC {position: static;}"']);
   window._Hasync.push(['Histats.fasi','1']);
   window._Hasync.push(['Histats.track_hits','']);
 
-  const hs = document.createElement('script');
-  hs.type = 'text/javascript';
-  hs.async = true;
-  hs.src = '//s10.histats.com/js15_giftop_as.js';
+  const hs = document.createElement('script'); hs.type='text/javascript'; hs.async=true; hs.src='//s10.histats.com/js15_giftop_as.js';
   (document.head || document.body).appendChild(hs);
 
-  // ย้าย #histatsC (ที่สคริปต์สร้าง) เข้าไปอยู่ใน holder ของเรา
-  const move = () => {
-    const c = document.getElementById('histatsC');
-    if (c && !holder.contains(c)) { holder.appendChild(c); return; }
-    requestAnimationFrame(move);
-  };
+  const move = ()=>{ const c=document.getElementById('histatsC'); if(c && !holder.contains(c)){ holder.appendChild(c); return; } requestAnimationFrame(move); };
   move();
 }
