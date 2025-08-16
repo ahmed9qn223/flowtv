@@ -1,15 +1,25 @@
-/* ===================== styles.css (final – equal-size cards + stagger + bigger tab icons) ===================== */
+/* ===================== styles.css (final) =====================
+   - Equal-size channel cards (ทุกใบเท่ากันทุกอุปกรณ์)
+   - Glass tabs + bigger, centered icons (บูสต์หมวด "เพลง")
+   - Category switch animation (stagger enter/exit)
+   - Histats badge at header right (responsive)
+================================================================ */
+
+/* ---------- Root tokens ---------- */
 :root{
   --bg:#0c0c0d; --panel:#141516; --panel-2:#101112; --text:#f2f2f2;
   --muted:#a0a7b0; --border:#242628; --maxw:1200px;
 
-  /* Fixed channel card size (เท่ากันทุกใบทุกอุปกรณ์) */
-  --tile-w:104px;   /* ความกว้างการ์ด */
-  --tile-h:120px;   /* ความสูงการ์ด */
-  --tile-g:10px;    /* ช่องไฟ */
+  /* Fixed channel card size (เท่ากันจริงทุกใบ) */
+  --tile-w:104px;     /* ความกว้างการ์ด */
+  --tile-h:120px;     /* ความสูงการ์ด */
+  --tile-g:10px;      /* ช่องไฟ */
+
+  /* Tabs */
+  --tab-gap:12px;     /* ระยะห่าง icon ↔ label */
 }
 
-/* Base / Reset */
+/* ---------- Base / Reset ---------- */
 *{box-sizing:border-box}
 html,body{height:100%}
 html,body{background:var(--bg)!important;color:var(--text)}
@@ -27,7 +37,7 @@ button.tab,button.channel{
 }
 button.tab:focus,button.channel:focus{outline:none}
 
-/* Header */
+/* ---------- Header ---------- */
 header{
   position:sticky; top:0; z-index:20;
   border-bottom:1px solid var(--border);
@@ -49,25 +59,24 @@ header{
 .now-playing.swap{animation:npFade .24s ease both}
 @keyframes npFade{from{opacity:0;transform:translateY(4px)}to{opacity:.92;transform:none}}
 
-/* === Histats: ด้านขวาบนภายใน header (ย่อบนมือถือ) === */
+/* Histats ด้านขวาบน (ย่อบนมือถือ) */
 #histats_counter{
   position:absolute; top:4px; right:4px; z-index:30;
   line-height:0; pointer-events:auto;
-  transform:scale(.82);                 /* desktop */
-  transform-origin:top right;
+  transform:scale(.82); transform-origin:top right;
 }
 #histats_counter #histatsC{ position:static !important }
 #histats_counter img{ opacity:.9; filter:drop-shadow(0 1px 2px rgba(0,0,0,.45)) }
-@media (max-width: 640px){ #histats_counter{ transform:scale(.72) } }
-@media (max-width: 480px){ #histats_counter{ transform:scale(.64) } }
-@media (max-width: 390px){ #histats_counter{ transform:scale(.58) } }
-@media (max-width: 340px){ #histats_counter{ transform:scale(.52) } }
+@media (max-width:640px){ #histats_counter{ transform:scale(.72) } }
+@media (max-width:480px){ #histats_counter{ transform:scale(.64) } }
+@media (max-width:390px){ #histats_counter{ transform:scale(.58) } }
+@media (max-width:340px){ #histats_counter{ transform:scale(.52) } }
 
-/* App / Player */
+/* ---------- App / Player ---------- */
 .app{width:min(100%,var(--maxw));margin:auto;padding:10px 14px;flex:1 0 auto}
 #player{width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden}
 
-/* ---- Glass Tabs ---- */
+/* ---------- Glass Tabs ---------- */
 .tabs{
   position:relative;display:flex;gap:10px;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;
   padding:12px 10px;margin:10px 0 8px;scrollbar-gutter:stable both-edges;justify-content:flex-start;
@@ -86,32 +95,37 @@ header{
 }
 .tab{position:relative;flex:0 0 auto;cursor:pointer;scroll-snap-align:center;contain:paint;-webkit-tap-highlight-color:transparent}
 
-/* tab-card (ขนาดกะทัดรัด + ไอคอนใหญ่ขึ้น + เว้นระยะมากขึ้น) */
+/* แท็บ: จัดกลางเป๊ะ + ไอคอนใหญ่ขึ้น */
 .tab-card{
   width:clamp(70px,11vw,88px);
   height:clamp(56px,9.8vw,70px);
   border-radius:10px;
-  display:grid;grid-template-rows:auto auto;justify-items:center;align-content:center;
-  gap:10px; /* เพิ่มระยะระหว่าง icon กับ label */
+  display:grid; grid-template-rows:auto auto; place-items:center;
+  gap:var(--tab-gap);
   background:rgba(255,255,255,.06);
   border:1px solid rgba(255,255,255,.12);
   box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 6px 14px rgba(0,0,0,.22);
-  color:#fff;transform:translateZ(0) scale(1);
-  backface-visibility:hidden;will-change:transform;transition:transform .16s ease;
+  color:#fff; transform:translateZ(0) scale(1);
+  backface-visibility:hidden; will-change:transform; transition:transform .16s ease;
 }
 .tab:hover .tab-card{transform:translateZ(0) scale(1.015)}
 .tab:active .tab-card{transform:scale(.985)}
 .tab:focus-visible .tab-card{box-shadow:0 0 0 2px rgba(255,255,255,.85),0 10px 20px rgba(0,0,0,.30)}
 .tab[aria-selected="true"] .tab-card{transform:scale(1.03)}
-.tab-icon svg{width:28px;height:28px;display:block;color:#fff}
 .tab-label{font-weight:700;font-size:10.8px;letter-spacing:.2px}
-@media (max-width:640px){
-  .tab-card{gap:9px}
-  .tab-icon svg{width:26px;height:26px}
+
+/* ไอคอนจัดกึ่งกลาง + responsive size */
+.tab-icon{
+  width:clamp(28px,4.2vw,36px);
+  height:clamp(28px,4.2vw,36px);
+  display:grid; place-items:center; line-height:0;
 }
-@media (max-width:420px){
-  .tab-card{gap:8px}
-  .tab-icon svg{width:24px;height:24px}
+.tab-icon svg{width:100%;height:100%;display:block;color:#fff}
+
+/* บูสต์หมวด "เพลง" ให้ดูเท่ากับตัวอื่น */
+.tab[data-filter="เพลง"] .tab-icon{
+  width:clamp(32px,4.8vw,40px);
+  height:clamp(32px,4.8vw,40px);
 }
 
 .tab{--accent:#ffffff}
@@ -129,13 +143,13 @@ header{
 .tab[data-filter="สารคดี"]{--accent:#06b6d4}
 .tab[data-filter="เพลง"]{--accent:#a855f7}
 
-/* ---- Channel Grid: equal-size guarantee ---- */
+/* ---------- Channel Grid: equal-size guarantee ---------- */
 .grid{
   margin-top:10px;
   display:grid;
   gap:var(--tile-g);
   grid-template-columns:repeat(auto-fill, minmax(var(--tile-w), var(--tile-w)));
-  grid-auto-rows:var(--tile-h);  /* แถวสูงเท่าการ์ด */
+  grid-auto-rows:var(--tile-h);      /* แถวสูงเท่าการ์ด */
   justify-content:center;
   align-content:start;
 
@@ -143,7 +157,7 @@ header{
   --stagger:22ms;
 }
 
-/* = เอฟเฟกต์รวมตอนเปลี่ยนหมวด (exit -> enter with stagger) = */
+/* เอฟเฟกต์รวมตอนเปลี่ยนหมวด (exit -> enter with stagger) */
 .grid.switch-out .ch-card{
   animation: tileOut .16s ease-out forwards;
   will-change: transform, opacity, filter;
@@ -162,7 +176,7 @@ header{
 
 .grid.switch-out, .grid.switch-in{ contain: paint; }
 
-/* Channel card container (fixed size) */
+/* ---------- Channel Card ---------- */
 .channel{
   position:relative;
   width:var(--tile-w);
@@ -182,19 +196,14 @@ header{
 
 .ch-card{
   position:relative; z-index:1;
-  height:100% !important;  /* กินเต็มปุ่ม */
-  width:100%;
+  height:100% !important; width:100%;
   background:linear-gradient(180deg,var(--panel),var(--panel-2))!important;
   border:1px solid var(--border)!important;
   border-radius:12px;
   padding:9px 8px 8px;
   box-shadow:0 6px 16px rgba(0,0,0,.18);
-  display:grid;
-  grid-template-rows:1fr auto; /* โลโก้ยืด, ชื่ออยู่ล่าง */
-  gap:6px;
-  place-items:center;
-  transition:transform .12s ease,border-color .15s ease,box-shadow .15s ease;
-  overflow:hidden;
+  display:grid; grid-template-rows:1fr auto; gap:6px; place-items:center;
+  transition:transform .12s ease,border-color .15s ease,box-shadow .15s ease; overflow:hidden;
   contain:content;
 }
 .channel:hover .ch-card{
@@ -207,8 +216,7 @@ header{
 .logo-wrap{
   width:calc(var(--tile-h)*0.46);
   height:calc(var(--tile-h)*0.46);
-  border-radius:10px;
-  background:#0e0f10;
+  border-radius:10px; background:#0e0f10;
   display:grid; place-items:center; overflow:hidden;
 }
 .logo{
@@ -217,19 +225,17 @@ header{
   max-height:calc(var(--tile-h)*0.40);
 }
 .name{
-  font-size:11.8px;
-  line-height:1.2;
-  height:calc(1.2em * 2); /* สูง 2 บรรทัดเท่ากันทุกใบ */
+  font-size:11.8px; line-height:1.2; height:calc(1.2em * 2); /* 2 บรรทัดคงที่ */
   text-align:center; color:#e7e7e7;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
   overflow:hidden; text-overflow:ellipsis;
 }
 
-/* Ripple */
+/* Ripple (กดการ์ด) */
 .ripple{position:absolute;border-radius:50%;pointer-events:none;transform:scale(0);opacity:.35;background:#fff;animation:ripple .55s ease-out;mix-blend-mode:overlay}
 @keyframes ripple{to{transform:scale(8);opacity:0}}
 
-/* Reduce motion */
+/* ---------- Reduce motion ---------- */
 @media (prefers-reduced-motion:reduce){
   .tab-card{transition:none}
   .tab:hover .tab-card,.tab[aria-selected="true"] .tab-card{transform:none}
@@ -237,14 +243,12 @@ header{
 }
 
 /* ---------- Responsive tuning ---------- */
-/* Compact desktops & large tablets */
 @media (max-width:1200px){ :root{ --tile-w:100px; --tile-h:116px; } }
-/* Tablets / small laptops */
-@media (max-width:900px){ :root{ --tile-w:98px;  --tile-h:112px; } }
-/* Phones (portrait) */
-@media (max-width:700px){ :root{ --tile-w:94px;  --tile-h:108px; --tile-g:9px; } }
-@media (max-width:520px){ :root{ --tile-w:90px;  --tile-h:104px; --tile-g:8px; } }
-/* Very small phones */
-@media (max-width:390px){ :root{ --tile-w:86px;  --tile-h:100px; } }
-/* Phones landscape (height tight) */
-@media (max-height:420px) and (orientation:landscape){ :root{ --tile-h:96px; } }
+@media (max-width:900px) { :root{ --tile-w:98px;  --tile-h:112px; } }
+@media (max-width:700px) { :root{ --tile-w:94px;  --tile-h:108px; --tile-g:9px; } }
+@media (max-width:520px) { :root{ --tile-w:90px;  --tile-h:104px; --tile-g:8px; } }
+@media (max-width:390px) { :root{ --tile-w:86px;  --tile-h:100px; } }
+/* มือถือแนวนอน (พื้นที่สูงน้อย) */
+@media (max-height:420px) and (orientation:landscape){
+  :root{ --tile-h:96px; }
+}
