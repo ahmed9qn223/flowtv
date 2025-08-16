@@ -1,204 +1,250 @@
-/* ==========================================================
-   FLOWTV - styles.css (classic glass tabs + equal cards)
-   - Header + player
-   - Tabs แบบการ์ดแก้ว ไอคอนด้านบน + ชื่อด้านล่าง (รองรับ text-only ด้วย)
-   - Grid การ์ดช่องขนาดเท่ากันทุกอุปกรณ์
-   - รองรับ .ch-logo / .logo / img ภายในการ์ด
-   - หมวด "หนัง" ปรับโลโก้นอนยาว
-   ========================================================== */
-
+/* ============ Base ============ */
 :root{
-  --bg:#0b0f14; --panel:#121821; --panel-2:#0f151d; --text:#e8f0ff; --muted:#a3b2c2;
-  --border:rgba(255,255,255,.08); --maxw:1200px;
+  --bg: #0b0f14;
+  --bg2:#0e131a;
+  --card:#121821;
+  --glass: rgba(255,255,255,.06);
+  --glass-strong: rgba(255,255,255,.1);
+  --stroke: rgba(255,255,255,.12);
+  --muted: #9fb2c8;
+  --text: #ecf5ff;
+  --accent: #32d1ff;
+
+  /* ขนาดการ์ดช่อง (ฐาน PC) → เล็กลง + เท่ากันจริง */
+  --tile-w: 92px;
+  --tile-h: 104px;
+  --tile-g: 10px;
+
+  /* โลโก้ในการ์ด */
+  --logo-max-w: 68%;
+  --logo-max-h: 52%;
 
   /* Player */
-  --player-radius:18px;
-
-  /* Tabs */
-  --tab-gap:10px;      /* ระยะไอคอน ↔ ชื่อ */
-  --tabW:clamp(86px,12vw,110px);
-  --tabH:clamp(70px,12vw,88px);
-  --tabRadius:12px;
-
-  /* Cards */
-  --tile-w:100px;
-  --tile-h:112px;
-  --tile-g:10px;
-
-  /* Logo */
-  --logo-max-w:72%;
-  --logo-max-h:56%;
+  --player-radius: 18px;
 }
 
-/* ---------- Base ---------- */
 *{box-sizing:border-box}
 html,body{height:100%}
-html,body{
+body{
   margin:0;
   background:
-    radial-gradient(1200px 600px at 50% -200px, #182233 0%, transparent 60%),
-    linear-gradient(#0a0f15,#080c11) fixed;
+    radial-gradient(1200px 600px at 50% -20%, #1e293b33 0, #0b0f1400 60%),
+    linear-gradient(180deg,#0b0f14 0,#090c11 60%,#080a0e 100%);
   color:var(--text);
-  font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans Thai",sans-serif;
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Thai", "Noto Sans", Arial, sans-serif;
 }
-a{color:inherit;text-decoration:none}
-button{all:unset;display:inline-block;cursor:pointer}
 
-/* ---------- Header ---------- */
+/* Scroll */
+:root{scrollbar-color:#202733 transparent}
+::-webkit-scrollbar{height:10px;width:10px}
+::-webkit-scrollbar-thumb{background:#1f2631;border-radius:10px}
+
+/* ============ Header ============ */
 header{
-  position:sticky; top:0; z-index:20;
-  background:linear-gradient(180deg, rgba(7,10,15,.95), rgba(7,10,15,.78));
-  backdrop-filter:blur(6px);
-  border-bottom:1px solid rgba(255,255,255,.06);
+  position:sticky; top:0; z-index:30;
+  background:linear-gradient(180deg,#0b0f14f2 0,#0b0f1490 65%,transparent 100%);
+  backdrop-filter: blur(6px);
 }
 .h-wrap{
-  max-width:var(--maxw); margin:0 auto; padding:10px 14px;
-  display:grid; justify-items:center; gap:4px; position:relative;
+  position:relative;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 10px 16px 6px;
+  text-align:center;
 }
-.clock{font-weight:800;letter-spacing:.2px}
-.sub{color:var(--muted);font-size:12px}
+.clock{
+  font-weight:800;
+  letter-spacing:.3px;
+  text-shadow:0 1px 12px #0006;
+}
+.sub{
+  margin-top:2px;
+  font-size:12px;
+  color:var(--muted);
+}
 
-/* Histats (มุมขวาบน) – คงไว้ถ้าใช้ */
-#histats_counter{position:absolute;right:6px;top:6px;transform:scale(.82);transform-origin:top right;pointer-events:none}
-#histats_counter img{opacity:.9;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
-@media(max-width:640px){#histats_counter{transform:scale(.72)}}
-@media(max-width:480px){#histats_counter{transform:scale(.64)}}
+/* Histats badge (ถูกย้ายไปมุมขวาบนข้างเวลา) */
+#histats_counter{position:absolute; top:6px; right:8px; pointer-events:none;}
+/* script ภายนอกจะสร้าง #histatsC ให้เรา จัดสเกลมัน */
+#histatsC{transform:scale(.72); transform-origin:top right; filter:drop-shadow(0 2px 8px #000a);}
 
-/* ---------- Layout ---------- */
-.app{max-width:var(--maxw);margin:10px auto 60px;padding:0 14px}
+/* ปรับเล็กลงบนมือถือ */
+@media (max-width:640px){
+  #histatsC{transform:scale(.58);}
+}
 
-/* Player */
+/* ============ Player ============ */
+.app{max-width:1120px;margin:0 auto;padding:8px 12px 24px}
 #player{
-  width:100%; aspect-ratio:16/9; overflow:hidden;
+  width:100%;
+  aspect-ratio:16/9;
+  background:linear-gradient(180deg,#0d131b,#0a0f15);
+  border:1px solid var(--stroke);
   border-radius:var(--player-radius);
-  background:#05080c; border:1px solid rgba(255,255,255,.06);
-  box-shadow:0 6px 18px rgba(0,0,0,.45) inset, 0 10px 30px rgba(0,0,0,.35);
+  overflow:hidden;
+  box-shadow: 0 10px 36px rgba(0,0,0,.45), inset 0 1px 0 #ffffff10;
 }
 
-/* ---------- Tabs (Glass + Icon on top) ---------- */
+/* ============ Tabs (Glass) ============ */
 .tabs{
-  margin:14px 0 6px; display:flex; gap:10px;
-  overflow-x:auto; -webkit-overflow-scrolling:touch; padding:6px 2px 8px;
-  scrollbar-width:thin; justify-content:center;
+  display:flex; gap:12px;
+  padding:14px 4px 8px;
+  margin: 8px auto 4px;
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  justify-content:center;
+  max-width:980px;
 }
-.tabs::-webkit-scrollbar{height:8px}
-.tabs::-webkit-scrollbar-thumb{background:#1f2835;border-radius:10px}
+.tabs::-webkit-scrollbar{display:none}
 
 .tab{
-  position:relative; flex:0 0 var(--tabW);
-  height:var(--tabH);
-  border-radius:var(--tabRadius);
-  border:1px solid rgba(255,255,255,.12);
-  background:linear-gradient(180deg, #121821, #0f151d);
-  box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 8px 20px rgba(0,0,0,.30);
-  color:#fff; text-align:center; -webkit-tap-highlight-color:transparent;
-  transition:transform .12s ease, border-color .18s ease, box-shadow .18s ease;
-  display:grid; place-items:center;
+  appearance:none; border:0; background:transparent; color:inherit;
+  padding:0; cursor:pointer; outline:none;
 }
-/* กรณี “ไม่มี .tab-card” = ข้อความล้วน → จัดให้อยู่กลาง */
-.tab:not(:has(.tab-card)){font-weight:800;letter-spacing:.2px;padding:6px}
-
-/* ฉบับไอคอน + ข้อความ */
 .tab-card{
-  width:100%; height:100%; padding:10px 8px; border-radius:inherit;
-  display:grid; grid-template-rows:auto auto; place-items:center; gap:var(--tab-gap);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  width:98px; height:70px;
+  background: var(--glass);
+  border:1px solid var(--stroke);
+  border-radius:14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 4px 14px rgba(0,0,0,.35);
+  backdrop-filter: blur(10px);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
 }
-.tab-icon{
-  width:42px; height:42px; border-radius:50%; position:relative; display:grid; place-items:center;
-}
-.tab-icon::before{
-  content:""; position:absolute; inset:0; border-radius:inherit;
-  background:
-    radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,.18), rgba(255,255,255,.06)),
-    linear-gradient(180deg, rgba(0,0,0,.38), rgba(0,0,0,.58));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 8px 16px rgba(0,0,0,.25);
-}
-.tab-icon svg{ width:60%; height:60%; display:block; color:#fff; z-index:1; filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}
-.tab-label{ font-weight:800; font-size:11px; letter-spacing:.2px }
+.tab:hover .tab-card{ transform: translateY(-2px); box-shadow: inset 0 1px 0 #ffffff10, 0 8px 22px rgba(0,0,0,.45); }
 
-.tab:hover{ transform:translateY(-1px) }
-.tab:active{ transform:scale(.985) }
-.tab[aria-selected="true"]{
-  border-color:rgba(255,255,255,.7);
-  box-shadow:0 0 0 1px rgba(255,255,255,.45) inset, 0 10px 26px rgba(0,0,0,.32);
+.tab[aria-selected="true"] .tab-card{
+  background: linear-gradient(180deg, rgba(50,209,255,.20), rgba(50,209,255,.08));
+  border-color: #46e2ff66;
+  box-shadow: inset 0 1px 0 #aef2ff2e, 0 10px 26px rgba(19,166,216,.38);
+  position:relative;
 }
-/* เส้นเน้นใต้แท็บ */
-.tab::after{
-  content:""; position:absolute; left:50%; bottom:-2px; width:56%; height:3px; border-radius:3px;
-  background:var(--accent,#46a4ff);
-  box-shadow:0 2px 10px color-mix(in srgb, var(--accent) 60%, transparent);
-  transform:translate3d(-50%,0,0) scaleX(0); transform-origin:center; opacity:0;
-  transition:transform .22s ease, opacity .22s ease;
+.tab[aria-selected="true"] .tab-card::after{
+  content:""; position:absolute; left:10px; right:10px; bottom:6px; height:3px;
+  border-radius:3px;
+  background: linear-gradient(90deg, transparent, #52e2ff, transparent);
 }
-.tab[aria-selected="true"]::after{transform:translate3d(-50%,0,0) scaleX(1);opacity:1}
 
-/* สี accent รายหมวด */
-.tab[data-filter="ข่าว"]{--accent:#ef4444}
-.tab[data-filter="บันเทิง"]{--accent:#f59e0b}
-.tab[data-filter="กีฬา"]{--accent:#22c55e}
-.tab[data-filter="สารคดี"]{--accent:#06b6d4}
-.tab[data-filter="เพลง"]{--accent:#a855f7}
-.tab[data-filter="หนัง"]{--accent:#f97316}
+/* ไอคอน + label */
+.tab-icon{ width:26px; height:26px; display:grid; place-items:center; margin-bottom:8px; color:#fff; opacity:.95;}
+.tab-icon svg{width:100%;height:100%}
+.tab-label{ font-size:13px; font-weight:700; letter-spacing:.2px; color:#eef6ff; text-shadow:0 1px 0 #0009 }
 
-/* ---------- Grid (การ์ดช่องเท่ากันจริง) ---------- */
+/* ============ Notices (banner) ============ */
+.notice-host{max-width:980px;margin:6px auto 6px;padding:0 4px}
+.notice{
+  display:flex; gap:10px; align-items:center; padding:10px 12px;
+  border-radius:12px; border:1px solid var(--stroke);
+  background: rgba(255,255,255,.04);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+  font-size:13px; color:#d9ecff;
+}
+.notice--info{ border-color:#46e2ff40; background:linear-gradient(180deg,rgba(50,209,255,.12),rgba(255,255,255,.02));}
+.notice--error{ border-color:#ff5b6b40; background:linear-gradient(180deg,rgba(255,91,107,.12),rgba(255,255,255,.02));}
+
+/* ============ Grid ช่อง ============ */
 .grid{
   display:grid; gap:var(--tile-g);
-  grid-template-columns:repeat(auto-fill, minmax(var(--tile-w), var(--tile-w)));
-  grid-auto-rows:var(--tile-h);
-  justify-content:center; align-content:start; margin-top:10px;
+  /* ทำให้การ์ด “เท่ากันจริง” ทุกใบ */
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-w), var(--tile-w)));
+  grid-auto-rows: var(--tile-h);
+  justify-content:center; align-content:start;
+  margin-top:10px;
 }
 
-/* ---------- Channel Card ---------- */
-.channel{position:relative;width:var(--tile-w);height:var(--tile-h);border-radius:12px}
+/* กล่องช่อง */
+.channel{ position:relative; width:var(--tile-w); height:var(--tile-h); }
 .ch-card{
   width:100%; height:100%;
-  background:linear-gradient(180deg, var(--panel), var(--panel-2));
-  border:1px solid var(--border); border-radius:12px;
-  padding:9px 6px 8px; box-shadow:0 6px 16px rgba(0,0,0,.18);
-  display:flex; flex-direction:column; justify-content:center; align-items:center;
-  transition:transform .12s ease, border-color .15s ease, box-shadow .15s ease; overflow:hidden;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:8px 6px 7px;
+  border-radius:12px;
+  background:linear-gradient(180deg, #111722, #0e141d);
+  border:1px solid var(--stroke);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 6px 18px rgba(0,0,0,.45);
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
 }
-.channel:hover .ch-card{
-  transform:translateY(-1px);
-  border-color:rgba(255,255,255,.65);
-  box-shadow:0 0 0 1px rgba(255,255,255,.45) inset, 0 8px 22px rgba(0,0,0,.25);
-}
-.channel:active .ch-card{transform:scale(.985)}
 
-/* โลโก้ — รองรับทุกชื่อคลาส */
+/* เอฟเฟกต์เวลาโฮเวอร์/กด */
+.channel:hover .ch-card{ transform: translateY(-2px); box-shadow: inset 0 1px 0 #ffffff10, 0 10px 26px rgba(0,0,0,.55); }
+.channel:active .ch-card{ transform: translateY(0); }
+
+/* โลโก้ภในการ์ด */
 .ch-card img, .ch-logo, .logo{
-  display:block; width:auto; height:auto;
-  max-width:var(--logo-max-w); max-height:var(--logo-max-h);
-  object-fit:contain; filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));
+  max-width:var(--logo-max-w);
+  max-height:var(--logo-max-h);
+  object-fit:contain; object-position:center;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,.4));
 }
 
-/* หมวด “หนัง” โลโก้นอนยาว */
+/* หมวด “หนัง” โลโก้กว้าง */
 .channel[data-category="หนัง"] .ch-card img,
 .channel[data-category="หนัง"] .ch-logo,
 .channel[data-category="หนัง"] .logo{
-  max-width:82%; max-height:44%;
+  max-width:80%; max-height:42%;
 }
 
 /* ชื่อช่อง 2 บรรทัดคงที่ */
 .ch-name, .name{
-  margin-top:8px; color:#e7e7e7; font-weight:700; font-size:12px;
-  line-height:1.25; height:calc(1.25em * 2); text-align:center;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;
+  margin-top:7px; text-align:center;
+  font-size:11.5px; line-height:1.25; color:#e8f2ff;
+  height: calc(1.25em * 2);
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  overflow:hidden; text-overflow:ellipsis;
 }
 
-/* Helper */
-.tip{margin-top:10px;color:var(--muted);font-size:12px}
-
-/* ---------- Responsive ---------- */
-@media(max-width:900px){ :root{--tile-w:96px;--tile-h:108px} }
-@media(max-width:640px){
-  :root{--tile-w:92px;--tile-h:104px;--tile-g:8px}
-  .clock{font-size:15px}
+/* สถานะกำลังเล่น */
+.channel.playing .ch-card{
+  border-color:#46e2ff66;
+  box-shadow: inset 0 1px 0 #aef2ff2e, 0 12px 28px rgba(19,166,216,.38);
 }
-@media(max-width:390px){ :root{--tile-w:88px;--tile-h:100px} }
-@media(max-height:420px) and (orientation:landscape){ :root{--tile-h:96px} }
 
-/* Reduce motion */
-@media (prefers-reduced-motion:reduce){
-  .tab,.channel{transition:none !important}
+/* เอฟเฟกต์รวมการ์ดตอนกรอง */
+.grid.filtering .channel{ animation:tile-pop .22s ease both }
+@keyframes tile-pop{
+  from{ transform:scale(.96); opacity:.0 }
+  to{ transform:scale(1); opacity:1 }
+}
+
+/* Tip */
+.tip{
+  margin: 10px auto 0;
+  max-width: 980px;
+  text-align:center;
+  color:#a7b9cd; font-size:12px;
+  opacity:.9;
+}
+
+/* ============ Responsive ============ */
+
+/* ≤1200px */
+@media (max-width:1200px){
+  :root{ --tile-w: 90px; --tile-h: 102px; --tile-g: 10px }
+}
+
+/* ≤900px */
+@media (max-width:900px){
+  :root{ --tile-w: 88px; --tile-h: 100px; --tile-g: 9px }
+  .tab-card{ width:96px; height:68px }
+}
+
+/* ≤640px (มือถือแนวตั้ง) */
+@media (max-width:640px){
+  :root{ --tile-w: 86px; --tile-h: 98px; --tile-g: 8px }
+  .app{padding:8px 10px 24px}
+  .tab-card{ width:92px; height:66px }
+  .tab-icon{ width:24px; height:24px; margin-bottom:7px }
+  .tab-label{ font-size:12.8px }
+}
+
+/* ≤390px (จอเล็กมาก) */
+@media (max-width:390px){
+  :root{ --tile-w: 84px; --tile-h: 96px; --tile-g: 8px }
+  .tab-card{ width:90px; height:64px }
+  .tab-icon{ width:23px; height:23px }
+}
+
+/* มือถือแนวนอน / จอเตี้ย → ลดความสูงการ์ดเล็กน้อยให้พอดี */
+@media (max-height:420px) and (orientation:landscape){
+  :root{ --tile-h: 94px }
 }
