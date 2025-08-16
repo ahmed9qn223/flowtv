@@ -1,12 +1,12 @@
-/* ===================== styles.css (final – smaller tabs & channel cards) ===================== */
+/* ===================== styles.css (final – smaller equal ch-card) ===================== */
 :root{
   --bg:#0c0c0d; --panel:#141516; --panel-2:#101112; --text:#f2f2f2;
   --muted:#a0a7b0; --border:#242628; --maxw:1200px;
 
-  /* ขนาดการ์ดช่อง (ย่อเล็กลง) */
-  --tile-min:110px;   /* ความกว้างขั้นต่ำของช่อง */
-  --tile-h:134px;     /* ความสูงของการ์ดช่อง */
-  --tile-g:12px;      /* ระยะห่างระหว่างช่อง */
+  /* ============ Channel card size (fixed & smaller) ============ */
+  --tile-w:104px;     /* fixed width per tile (smaller) */
+  --tile-h:120px;     /* fixed height per tile (smaller) */
+  --tile-g:10px;      /* gap */
 }
 
 /* Base / Reset */
@@ -47,19 +47,18 @@ header{
 .now-playing.swap{animation:npFade .24s ease both}
 @keyframes npFade{from{opacity:0;transform:translateY(4px)}to{opacity:.92;transform:none}}
 
-/* === Histats: ด้านขวาบนภายใน header (ย่อบนมือถือ) === */
+/* Histats (ขวาบนใน header + ย่อบนมือถือ) */
 #histats_counter{
   position:absolute; top:4px; right:4px; z-index:30;
   line-height:0; pointer-events:auto;
-  transform:scale(.82);                 /* desktop */
-  transform-origin:top right;
+  transform:scale(.82); transform-origin:top right;
 }
 #histats_counter #histatsC{ position:static !important }
 #histats_counter img{ opacity:.9; filter:drop-shadow(0 1px 2px rgba(0,0,0,.45)) }
-@media (max-width: 640px){ #histats_counter{ transform:scale(.72); top:4px; right:4px; } }
-@media (max-width: 480px){ #histats_counter{ transform:scale(.64); top:3px; right:3px; } }
-@media (max-width: 390px){ #histats_counter{ transform:scale(.58); top:2px; right:2px; } }
-@media (max-width: 340px){ #histats_counter{ transform:scale(.52); top:2px; right:2px; } }
+@media (max-width: 640px){ #histats_counter{ transform:scale(.72) } }
+@media (max-width: 480px){ #histats_counter{ transform:scale(.64) } }
+@media (max-width: 390px){ #histats_counter{ transform:scale(.58) } }
+@media (max-width: 340px){ #histats_counter{ transform:scale(.52) } }
 
 /* App / Player */
 .app{width:min(100%,var(--maxw));margin:auto;padding:10px 14px;flex:1 0 auto}
@@ -84,7 +83,7 @@ header{
 }
 .tab{position:relative;flex:0 0 auto;cursor:pointer;scroll-snap-align:center;contain:paint;-webkit-tap-highlight-color:transparent}
 
-/* ขนาด tab-card (ย่อเล็กลง) */
+/* Tab size (คงของเดิม ถ้าต้องย่อเพิ่ม ให้ปรับตรงนี้ได้) */
 .tab-card{
   width:clamp(70px,11vw,88px);
   height:clamp(56px,9.8vw,70px);
@@ -118,53 +117,63 @@ header{
 .tab[data-filter="สารคดี"]{--accent:#06b6d4}
 .tab[data-filter="เพลง"]{--accent:#a855f7}
 
-/* ---- Channel Grid (uniform) ---- */
+/* ---- Channel Grid (fixed-size tiles -> all equal) ---- */
 .grid{
-  margin-top:10px;display:grid;gap:var(--tile-g);
-  grid-template-columns:repeat(auto-fit,minmax(var(--tile-min),1fr));
-  align-items:start;
+  margin-top:10px; display:grid; gap:var(--tile-g);
+  /* fixed width columns, auto-wrapping, centered */
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-w), var(--tile-w)));
+  justify-content:center;
+  align-content:start;
 }
 .grid.fade-in{animation:gridFade .24s ease both}
 @keyframes gridFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
-/* การ์ดช่อง (ย่อเล็กลง) */
-.channel{position:relative;border-radius:16px;cursor:pointer}
+/* Channel card (fixed size + smaller) */
+.channel{
+  position:relative; width:var(--tile-w); /* ensure each item matches column width */
+  border-radius:14px; cursor:pointer;
+}
 .channel::after{
-  content:"";position:absolute;inset:-6px;border-radius:20px;
+  content:"";position:absolute;inset:-6px;border-radius:18px;
   background:radial-gradient(60% 60% at 50% 50%, rgba(255,255,255,.55) 0%, transparent 70%);
-  filter:blur(14px);opacity:0;transition:opacity .25s ease;pointer-events:none;z-index:0;
+  filter:blur(12px);opacity:0;transition:opacity .25s ease;pointer-events:none;z-index:0;
 }
 .channel:hover::after,.channel.active::after{opacity:.9;animation:neonPulse 2.4s ease-in-out infinite}
-@keyframes neonPulse{0%{filter:blur(10px);opacity:.55}50%{filter:blur(15px);opacity:.95}100%{filter:blur(10px);opacity:.55}}
+@keyframes neonPulse{0%{filter:blur(9px);opacity:.5}50%{filter:blur(14px);opacity:.95}100%{filter:blur(9px);opacity:.5}}
 
 .ch-card{
-  position:relative; z-index:1; height:var(--tile-h)!important;
-  background:linear-gradient(180deg,var(--panel),var(--panel-2))!important; border:1px solid var(--border)!important;
-  border-radius:12px; padding:10px 8px 8px; box-shadow:0 8px 20px rgba(0,0,0,.18);
-  display:grid; grid-template-rows:1fr auto; gap:8px; place-items:center;
+  position:relative; z-index:1;
+  height:var(--tile-h)!important;   /* fixed equal height */
+  background:linear-gradient(180deg,var(--panel),var(--panel-2))!important;
+  border:1px solid var(--border)!important;
+  border-radius:12px;
+  padding:9px 8px 8px;              /* tighter */
+  box-shadow:0 6px 16px rgba(0,0,0,.18);
+  display:grid; grid-template-rows:1fr auto; gap:6px; place-items:center;
   transition:transform .12s ease,border-color .15s ease,box-shadow .15s ease; overflow:hidden;
 }
 .channel:hover .ch-card{
   transform:translateY(-1px);border-color:rgba(255,255,255,.7);
-  box-shadow:0 0 0 1px rgba(255,255,255,.75) inset, 0 0 12px rgba(255,255,255,.45), 0 0 26px rgba(255,255,255,.25);
+  box-shadow:0 0 0 1px rgba(255,255,255,.75) inset, 0 0 10px rgba(255,255,255,.42), 0 0 20px rgba(255,255,255,.22);
 }
 .channel:active .ch-card{transform:scale(.985)}
-.channel.active .ch-card{border-color:#fff;box-shadow:0 0 0 1.5px #fff inset, 0 0 16px rgba(255,255,255,.6), 0 0 32px rgba(255,255,255,.35)}
+.channel.active .ch-card{border-color:#fff;box-shadow:0 0 0 1.4px #fff inset, 0 0 14px rgba(255,255,255,.6), 0 0 28px rgba(255,255,255,.32)}
 
 .logo-wrap{
-  width:calc(var(--tile-h)*0.48);
-  height:calc(var(--tile-h)*0.48);
-  border-radius:11px; background:#0e0f10; display:grid; place-items:center; overflow:hidden;
+  width:calc(var(--tile-h)*0.46);
+  height:calc(var(--tile-h)*0.46);
+  border-radius:10px; background:#0e0f10;
+  display:grid; place-items:center; overflow:hidden;
 }
 .logo{
-  max-width:calc(var(--tile-h)*0.42);
-  max-height:calc(var(--tile-h)*0.42);
+  max-width:calc(var(--tile-h)*0.40);
+  max-height:calc(var(--tile-h)*0.40);
 }
 .name{
-  font-size:12.2px;
+  font-size:11.8px;                 /* slightly smaller text */
   text-align:center; color:#e7e7e7;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
-  overflow:hidden; text-overflow:ellipsis; line-height:1.22; min-height:2.44em;
+  overflow:hidden; text-overflow:ellipsis; line-height:1.2; min-height:2.4em;
 }
 
 /* Ripple */
@@ -178,24 +187,27 @@ header{
   .grid.fade-in{animation:none}
 }
 
-/* ---------- Responsive size tuning (ปรับละเอียดทุกแพลตฟอร์ม) ---------- */
-@media (max-width: 900px){
-  :root{ --tile-min:104px; --tile-h:126px; }
+/* ---------- Responsive tuning (portrait, landscape, desktop) ---------- */
+/* Compact desktops & large tablets */
+@media (max-width: 1200px){
+  :root{ --tile-w:100px; --tile-h:116px; }
 }
+/* Tablets / small laptops */
+@media (max-width: 900px){
+  :root{ --tile-w:98px; --tile-h:112px; }
+}
+/* Phones (portrait) */
 @media (max-width: 700px){
-  :root{ --tile-min:98px; --tile-h:120px; --tile-g:10px; }
+  :root{ --tile-w:94px; --tile-h:108px; --tile-g:9px; }
 }
 @media (max-width: 520px){
-  :root{ --tile-min:92px; --tile-h:112px; --tile-g:8px; }
-  .tab-card{
-    width:clamp(64px,22vw,78px);
-    height:clamp(50px,18vw,64px);
-    border-radius:9px; gap:4px;
-  }
-  .tab-icon svg{width:20px;height:20px}
-  .tab-label{font-size:10.4px}
+  :root{ --tile-w:90px; --tile-h:104px; --tile-g:8px; }
 }
-/* มือถือแนวนอนที่ความสูงน้อย: ลดความสูงการ์ดลงอีก */
-@media (max-width: 920px) and (orientation: landscape){
-  :root{ --tile-min:110px; --tile-h:110px; }
+/* Very small phones */
+@media (max-width: 390px){
+  :root{ --tile-w:86px; --tile-h:100px; }
+}
+/* Phones in landscape (height is tight) */
+@media (max-height: 420px) and (orientation: landscape){
+  :root{ --tile-h:96px; }
 }
