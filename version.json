@@ -1,0 +1,6 @@
+{
+  "appVersion": "2025.08.16-01",
+  "dataVersion": "2025.08.16-01",   // ใช้เช็คเปลี่ยนแปลง channels/categories
+  "commit": "GIT_SHA",
+  "updatedAt": "2025-08-16T12:00:00Z"
+}
