@@ -1,21 +1,20 @@
-/* ============ Base Theme ============ */
+/* ============ THEME ============ */
 :root{
-  --bg: #0b0f14;
-  --panel: #0f151e;
-  --panel-2:#0c121a;
-  --stroke: rgba(255,255,255,.12);
-  --stroke-soft: rgba(255,255,255,.08);
-  --text: #ecf5ff;
+  --bg:#0b0f14;
+  --panel:#0e141c;
+  --panel-2:#0b1219;
+  --stroke:rgba(255,255,255,.10);
+  --stroke-soft:rgba(255,255,255,.06);
+  --text:#eef6ff;
   --muted:#a7b9cd;
   --accent:#37d2ff;
 
-  /* ขนาดการ์ด (คล่องตัวทุกจอ) */
-  --tile-w: clamp(98px, 12vw, 132px);
-  --tile-h: clamp(116px, 14.2vw, 150px);
-  --tile-g: 12px;
+  /* ขนาดการ์ด (เล็กลง + เท่ากันทุกจอ) */
+  --tile-w: clamp(86px, 10.4vw, 118px);
+  --tile-h: clamp(102px, 12.4vw, 128px);
+  --tile-g: 10px;
 
-  --player-radius: 18px;
-  --glass: rgba(255,255,255,.05);
+  --player-radius: 16px;
 }
 
 *{box-sizing:border-box}
@@ -26,61 +25,32 @@ body{
   background:
     radial-gradient(1200px 600px at 50% -20%, #1f2b3b33 0, transparent 60%),
     linear-gradient(180deg, #0b0f14 0, #090c11 60%, #080a0e 100%);
-  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Thai", "Noto Sans", Arial, sans-serif;
+  font: 14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Noto Sans",Arial,sans-serif;
 }
 
-/* Scroll */
-:root{scrollbar-color:#1d2734 transparent}
 ::-webkit-scrollbar{height:10px;width:10px}
 ::-webkit-scrollbar-thumb{background:#1e2631;border-radius:10px}
 
-/* ============ Header / Clock ============ */
+/* ============ Header / Player ============ */
 header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#0b0f14f2 0,#0b0f1490 65%,transparent)}
 .h-wrap{max-width:1120px;margin:0 auto;padding:10px 16px 6px;text-align:center}
-.clock{font-weight:800;letter-spacing:.3px;text-shadow:0 1px 12px #0006}
+.clock{font-weight:800}
 .sub{margin-top:2px;font-size:12px;color:var(--muted)}
 #now-playing{margin-top:6px;font-size:13px;font-weight:700;color:#dff2ff}
 
-/* Histats (ถ้าใช้) */
-#histats_counter{position:absolute;top:6px;right:8px;pointer-events:none}
-#histatsC{transform:scale(.72);transform-origin:top right;filter:drop-shadow(0 2px 8px #000a)}
-@media (max-width:640px){#histatsC{transform:scale(.58)}}
-
-/* ============ Player ============ */
 .app{max-width:1120px;margin:0 auto;padding:8px 12px 24px}
 #player{
-  width:100%;
-  aspect-ratio:16/9;
-  background:linear-gradient(180deg,#0e141d,#0b121a);
-  border:1px solid var(--stroke);
-  border-radius:var(--player-radius);
-  overflow:hidden;
-  box-shadow:0 10px 36px rgba(0,0,0,.45), inset 0 1px 0 #ffffff0f;
+  width:100%;aspect-ratio:16/9;background:var(--panel-2);
+  border:1px solid var(--stroke);border-radius:var(--player-radius);overflow:hidden;
+  box-shadow:0 10px 28px rgba(0,0,0,.45);
 }
 
-/* ============ Tabs (ใช้เดิมได้ ถ้ามี) ============ */
-.tabs{display:flex;gap:12px;padding:14px 4px 8px;margin:8px auto 4px;overflow-x:auto;scrollbar-width:none;justify-content:center;max-width:980px}
+/* ============ Tabs (มีหรือไม่มีก็ไม่กระทบ) ============ */
+.tabs{display:flex;gap:10px;padding:12px 4px 6px;margin:8px auto 0;overflow-x:auto;scrollbar-width:none;justify-content:center;max-width:980px}
 .tabs::-webkit-scrollbar{display:none}
-.tab{appearance:none;border:0;background:transparent;color:inherit;padding:0;cursor:pointer;outline:none}
-.tab-card{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  width:96px;height:66px;background:var(--glass);border:1px solid var(--stroke);
-  border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 4px 14px rgba(0,0,0,.35);
-  backdrop-filter: blur(10px);transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
-}
-.tab:hover .tab-card{transform:translateY(-2px);box-shadow:inset 0 1px 0 #ffffff10,0 8px 22px rgba(0,0,0,.45)}
-.tab[aria-selected="true"] .tab-card{
-  background:linear-gradient(180deg,rgba(55,210,255,.20),rgba(55,210,255,.08));
-  border-color:#52e2ff66;box-shadow:inset 0 1px 0 #aef2ff2e,0 10px 26px rgba(19,166,216,.38);position:relative
-}
-.tab[aria-selected="true"] .tab-card::after{
-  content:"";position:absolute;left:10px;right:10px;bottom:6px;height:3px;border-radius:3px;
-  background:linear-gradient(90deg,transparent,#52e2ff,transparent)
-}
-.tab-icon{width:24px;height:24px;display:grid;place-items:center;margin-bottom:7px;color:#fff}
-.tab-label{font-size:12.8px;font-weight:700;color:#eef6ff;text-shadow:0 1px 0 #0009}
+.tab{appearance:none;background:transparent;border:0;color:inherit;padding:0;cursor:pointer}
 
-/* ============ Grid ช่อง ============ */
+/* ============ GRID ช่อง ============ */
 .grid{
   --col: minmax(var(--tile-w), 1fr);
   display:grid; gap:var(--tile-g);
@@ -93,90 +63,102 @@ header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#0b0f1
 /* ปุ่มช่อง */
 .channel{position:relative;width:100%;height:var(--tile-h);cursor:pointer}
 .ch-card{
-  position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
-  width:100%;height:100%;padding:10px 8px 8px;border-radius:14px;
-  background:linear-gradient(180deg,#0f151e,#0e141c);
+  position:relative; display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+  width:100%; height:100%; padding:9px 8px 8px; border-radius:12px;
+
+  /* <<< ตัด “พื้นขาว” ออก: ใช้พื้นทึบเข้ม + ไม่มีไฮไลต์ขาว >>> */
+  background: var(--panel);
   border:1px solid var(--stroke-soft);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 6px 18px rgba(0,0,0,.45);
-  transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+  box-shadow: 0 6px 16px rgba(0,0,0,.42);
+
+  transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease, background .14s ease;
 }
-.channel:hover .ch-card{transform:translateY(-2px);box-shadow:inset 0 1px 0 #ffffff10,0 10px 26px rgba(0,0,0,.55);border-color:var(--stroke)}
+
+/* Hover/Focus – เรียบๆ */
+.channel:hover .ch-card,
+.channel:focus-visible .ch-card{
+  transform: translateY(-2px);
+  border-color: var(--stroke);
+  box-shadow: 0 10px 22px rgba(0,0,0,.55);
+}
 
 /* โลโก้กึ่งกลาง (รองรับโลโก้ยาว) */
 .ch-card img,.ch-logo,.logo{
-  max-width:76%; max-height:52%;
-  object-fit:contain; object-position:center;
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,.45));
+  max-width:72%;   /* เล็กลงให้พอดีการ์ดใหม่ */
+  max-height:50%;
+  object-fit:contain; object-position:center; border-radius:0;
+  /* ไม่มีพื้นหลังขาว */
+  background: transparent!important;
+  filter: drop-shadow(0 1px 6px rgba(0,0,0,.35));
 }
 .channel[data-category="หนัง"] .ch-card img,
 .channel[data-category="หนัง"] .ch-logo,
 .channel[data-category="หนัง"] .logo{
-  max-width:84%; max-height:46%;
+  max-width:82%; max-height:46%;
 }
 
-/* ชื่อช่อง – เท่ากันทุกใบ 2 บรรทัด */
+/* ชื่อช่อง – สูงเท่ากันทุกใบ (2 บรรทัด) */
 .ch-name,.name{
   margin-top:auto; padding-top:8px; text-align:center;
-  font-size:12.5px; line-height:1.28;
+  font-size:12.2px; line-height:1.28;
   height:calc(1.28em * 2 + 2px);
   color:#eaf2ff;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
   overflow:hidden; text-overflow:ellipsis; word-break:break-word; text-wrap:balance;
 }
 
-/* ============ เอฟเฟกต์ “กำลังเล่น” + Ripple ============ */
+/* กำลังเล่น – ขอบขาวเรืองแสง (บางลง ดูสะอาด) */
 .channel.playing .ch-card{
-  background:linear-gradient(180deg,#152033,#121a27);
-  border-color:#fff;
+  background: #101a28;
+  border-color:#ffffffcc;
   box-shadow:
-    inset 0 0 0 1px #ffffff80,
-    0 0 0 2px #ffffff33,
-    0 10px 28px rgba(255,255,255,.22),
-    0 0 30px 10px rgba(255,255,255,.16);
+    0 12px 26px rgba(0,0,0,.6),
+    0 0 0 1px #ffffff45,
+    0 0 24px 4px rgba(255,255,255,.14);
 }
 .channel.playing .ch-card::before{
   content:""; position:absolute; inset:-2px; border-radius:inherit; pointer-events:none;
-  box-shadow:0 0 0 0 rgba(255,255,255,.32);
+  box-shadow:0 0 0 0 rgba(255,255,255,.30);
   animation:cardPulse 1.6s ease-out infinite;
 }
 @keyframes cardPulse{
-  0%{box-shadow:0 0 0 0 rgba(255,255,255,.32)}
+  0%{box-shadow:0 0 0 0 rgba(255,255,255,.30)}
   70%{box-shadow:0 0 0 10px rgba(255,255,255,0)}
   100%{box-shadow:0 0 0 10px rgba(255,255,255,0)}
 }
 
-/* ripple ตอนกด */
+/* Ripple ตอนกด (นุ่มขึ้น) */
 .channel.pressed .ch-card::after{
   content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
   background:radial-gradient(circle at var(--x,50%) var(--y,50%),
-     rgba(255,255,255,.35) 0%, rgba(255,255,255,.22) 18%, rgba(255,255,255,0) 60%);
-  animation:cardRipple 550ms ease-out forwards;
+    rgba(255,255,255,.28) 0%, rgba(255,255,255,.16) 18%, rgba(255,255,255,0) 60%);
+  animation:cardRipple 520ms ease-out forwards;
 }
 @keyframes cardRipple{from{opacity:.85;transform:scale(1)}to{opacity:0;transform:scale(1.1)}}
-@media (prefers-reduced-motion:reduce){
-  .channel.playing .ch-card::before,.channel.pressed .ch-card::after{animation:none}
-}
 
 /* เอฟเฟกต์ตอนกรอง/สลับชุดการ์ด */
-.grid.filtering .channel{animation:tilePop .22s ease both}
+.grid.filtering .channel{animation:tilePop .20s ease both}
 @keyframes tilePop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
 
 /* ข้อความช่วย */
 .tip{margin:10px auto 0;max-width:980px;text-align:center;color:#a7b9cd;font-size:12px}
 
-/* ============ Responsive tune ============ */
-@media (max-width:920px){
-  :root{--tile-g:10px}
+/* Responsive tuning */
+@media (max-width:960px){
+  :root{--tile-g:9px}
 }
 @media (max-width:640px){
-  :root{--tile-g:9px}
+  :root{
+    --tile-w: clamp(84px, 28vw, 110px);
+    --tile-h: clamp(98px, 32vw, 122px);
+  }
   .app{padding:8px 10px 24px}
 }
 @media (max-height:420px) and (orientation:landscape){
-  :root{--tile-h: clamp(104px, 26vh, 124px)}
+  :root{--tile-h: clamp(96px, 24vh, 118px)}
 }
 
-/* Toast ชื่อช่องซ้อนบนวิดีโอ (มือถือ) */
+/* Toast ชื่อช่องบนน้ำวิดีโอ (มือถือ) */
 #mini-toast{
   position:absolute;z-index:5;left:12px;bottom:12px;
   padding:6px 10px;border-radius:10px;background:rgba(0,0,0,.55);
