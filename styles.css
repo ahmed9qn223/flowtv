@@ -10,16 +10,15 @@
   --text: #ecf5ff;
   --accent: #32d1ff;
 
-  /* ขนาดการ์ดช่อง (ฐาน PC) – เล็กและเท่ากันทุกใบ */
+  /* ขนาดการ์ดช่อง (ฐาน PC) */
   --tile-w: 92px;
   --tile-h: 104px;
   --tile-g: 10px;
 
-  /* โลโก้ภในการ์ด (ลดลงเพื่อเผื่อที่ชื่อ) */
+  /* โลโก้ในช่อง (เว้นพื้นที่ให้ชื่อ 2 บรรทัด) */
   --logo-max-w: 68%;
   --logo-max-h: 48%;
 
-  /* Player */
   --player-radius: 18px;
 }
 
@@ -63,7 +62,16 @@ header{
   color:var(--muted);
 }
 
-/* Histats badge (มุมขวาบน) */
+/* แสดงชื่อช่องใต้เวลา (จะถูกเติมโดย JS หากไม่มี) */
+#now-playing{
+  margin-top:6px;
+  font-size:13px;
+  font-weight:700;
+  color:#dff2ff;
+  opacity:.95;
+}
+
+/* Histats badge (มุมขวาบนใน header) – ถ้ามี */
 #histats_counter{position:absolute; top:6px; right:8px; pointer-events:none;}
 #histatsC{transform:scale(.72); transform-origin:top right; filter:drop-shadow(0 2px 8px #000a);}
 @media (max-width:640px){ #histatsC{transform:scale(.58);} }
@@ -91,7 +99,6 @@ header{
   max-width:980px;
 }
 .tabs::-webkit-scrollbar{display:none}
-
 .tab{ appearance:none; border:0; background:transparent; color:inherit; padding:0; cursor:pointer; outline:none; }
 .tab-card{
   display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -118,7 +125,7 @@ header{
 .tab-icon svg{width:100%;height:100%}
 .tab-label{ font-size:13px; font-weight:700; letter-spacing:.2px; color:#eef6ff; text-shadow:0 1px 0 #0009 }
 
-/* ================== Notices ================== */
+/* ================== Notices (ถ้ามี) ================== */
 .notice-host{max-width:980px;margin:6px auto 6px;padding:0 4px}
 .notice{
   display:flex; gap:10px; align-items:center; padding:10px 12px;
@@ -138,10 +145,13 @@ header{
   justify-content:center; align-content:start;
   margin-top:10px;
 }
-
-/* กล่องช่อง */
-.channel{ position:relative; width:var(--tile-w); height:var(--tile-h); }
+.channel{
+  position:relative;
+  width:var(--tile-w); height:var(--tile-h);
+  cursor:pointer;
+}
 .ch-card{
+  position:relative; overflow:hidden;  /* สำหรับ ripple */
   display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
   width:100%; height:100%;
   padding:8px 6px 7px;
@@ -151,8 +161,6 @@ header{
   box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 6px 18px rgba(0,0,0,.45);
   transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
 }
-
-/* โฮเวอร์ */
 .channel:hover .ch-card{
   transform: translateY(-2px);
   box-shadow: inset 0 1px 0 #ffffff10, 0 10px 26px rgba(0,0,0,.55);
@@ -176,43 +184,61 @@ header{
 
 /* ชื่อช่อง — เสมอกัน 2 บรรทัด ชิดล่างการ์ด */
 .ch-name, .name{
-  margin-top:auto;            /* ดันลงล่างเสมอ */
+  margin-top:auto;
   padding-top:6px;
   text-align:center;
   font-size:12px;
   line-height:1.30;
-  height:calc(1.30em * 2 + 2px);   /* สูงคงที่ 2 บรรทัด */
+  height:calc(1.30em * 2 + 2px);
   color:#e8f2ff;
-
   display:-webkit-box;
   -webkit-line-clamp:2;
   -webkit-box-orient:vertical;
   overflow:hidden;
   text-overflow:ellipsis;
-
-  word-break: break-word;     /* ช่วยตัดคำภาษาอังกฤษ/ชื่อยาว */
-  text-wrap: balance;         /* กระจายให้สมดุล (เบราว์เซอร์ใหม่) */
+  word-break: break-word;
+  text-wrap: balance;
 }
 
-/* สถานะกำลังเล่น — เรืองแสงสีขาว */
+/* =========== เอฟเฟกต์ตอนกำลังเล่น + ripple =========== */
+/* เรืองแสงตอนกำลังเล่น */
 .channel.playing .ch-card{
-  background: linear-gradient(180deg, #141b27, #0f1520);
-  border-color: #ffffffcc;
-  box-shadow:
-    inset 0 0 0 1px #ffffff66,
-    0 0 0 2px #ffffff33,
-    0 10px 28px rgba(255,255,255,.22),
-    0 0 24px 8px rgba(255,255,255,.16);
-}
-
-/* โฟกัสด้วยคีย์บอร์ด */
-.channel:focus-visible .ch-card{
-  outline:none;
+  background: linear-gradient(180deg,#161e2b,#111926);
   border-color:#fff;
   box-shadow:
-    inset 0 0 0 1px #ffffff88,
-    0 0 0 3px #ffffff66,
-    0 10px 28px rgba(255,255,255,.18);
+    inset 0 0 0 1px #ffffff80,
+    0 0 0 2px #ffffff33,
+    0 10px 28px rgba(255,255,255,.22),
+    0 0 30px 10px rgba(255,255,255,.16);
+}
+/* pulse light ring */
+.channel.playing .ch-card::before{
+  content:""; position:absolute; inset:-2px; border-radius:inherit; pointer-events:none;
+  box-shadow:0 0 0 0 rgba(255,255,255,.35);
+  animation: cardPulse 1.6s ease-out infinite;
+}
+@keyframes cardPulse{
+  0%   { box-shadow:0 0 0 0 rgba(255,255,255,.35); }
+  70%  { box-shadow:0 0 0 10px rgba(255,255,255,0); }
+  100% { box-shadow:0 0 0 10px rgba(255,255,255,0); }
+}
+/* ripple ตอนแตะ/คลิก */
+.channel.pressed .ch-card::after{
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  background:
+    radial-gradient(circle at var(--x,50%) var(--y,50%),
+      rgba(255,255,255,.35) 0%,
+      rgba(255,255,255,.22) 18%,
+      rgba(255,255,255,.00) 60%);
+  animation: cardRipple 550ms ease-out forwards;
+}
+@keyframes cardRipple{
+  0%   { opacity:.85; transform:scale(1); }
+  100% { opacity:0;  transform:scale(1.1); }
+}
+@media (prefers-reduced-motion: reduce){
+  .channel.playing .ch-card::before,
+  .channel.pressed .ch-card::after{ animation:none }
 }
 
 /* เอฟเฟกต์รวมการ์ดตอนกรอง */
@@ -231,16 +257,13 @@ header{
 }
 
 /* ================== Responsive ================== */
-/* ≤1200px */
 @media (max-width:1200px){
   :root{ --tile-w: 90px; --tile-h: 102px; --tile-g: 10px }
 }
-/* ≤900px */
 @media (max-width:900px){
   :root{ --tile-w: 88px; --tile-h: 100px; --tile-g: 9px }
   .tab-card{ width:96px; height:68px }
 }
-/* ≤640px (มือถือแนวตั้ง) */
 @media (max-width:640px){
   :root{ --tile-w: 86px; --tile-h: 98px; --tile-g: 8px }
   .app{padding:8px 10px 24px}
@@ -248,13 +271,22 @@ header{
   .tab-icon{ width:24px; height:24px; margin-bottom:7px }
   .tab-label{ font-size:12.8px }
 }
-/* ≤390px (จอเล็กมาก) */
 @media (max-width:390px){
   :root{ --tile-w: 84px; --tile-h: 96px; --tile-g: 8px }
   .tab-card{ width:90px; height:64px }
   .tab-icon{ width:23px; height:23px }
 }
-/* มือถือแนวนอน / จอเตี้ย */
 @media (max-height:420px) and (orientation:landscape){
   :root{ --tile-h: 94px }
 }
+
+/* ====== Toast ชื่อช่องบนวิดีโอ (มือถือ) ====== */
+#mini-toast{
+  position:absolute; z-index:5; left:12px; bottom:12px;
+  padding:6px 10px; border-radius:10px;
+  background:rgba(0,0,0,.55); color:#fff; font-weight:700; font-size:12px;
+  backdrop-filter: blur(2px);
+  transform: translateY(8px); opacity:0; pointer-events:none;
+  transition: .25s ease;
+}
+#mini-toast.show{ transform:none; opacity:1 }
