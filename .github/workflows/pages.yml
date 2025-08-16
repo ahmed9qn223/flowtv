@@ -4,11 +4,11 @@ on:
   push:
     branches: [ "main" ]
     paths-ignore:
-      - 'version.json'   # กันไม่ให้คอมมิตไฟล์นี้แล้วเวิร์กโฟลว์รันซ้ำ
+      - 'version.json'        # กันไม่ให้คอมมิตไฟล์นี้แล้ววนลูป
   workflow_dispatch:
 
 permissions:
-  contents: write       # ต้องเป็น write เพื่อให้ push กลับเข้า repo ได้
+  contents: write             # ต้องเป็น write เพื่อ push กลับ
   pages: write
   id-token: write
 
@@ -23,7 +23,7 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0      # ให้ push กลับได้ง่ายขึ้น
+          fetch-depth: 0
 
       - name: Generate version.json (appVersion + dataVersion)
         shell: bash
@@ -53,17 +53,15 @@ jobs:
             "updatedAt": "${UPDATED}"
           }
           JSON
+          echo "== version.json ==" && cat version.json
 
-          echo "== version.json =="
-          cat version.json
-
-      # (ออปชัน) commit version.json กลับเข้า repo ให้เห็นในหน้าไฟล์
+      # (ออปชัน) commit version.json กลับเข้า repo — จะทำเฉพาะ push ที่ main
       - name: Commit version.json back to repo
-        if: ${{ github.ref == 'refs/heads/main' }}
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         shell: bash
         run: |
           set -e
-          if [[ -n $(git status --porcelain version.json) ]]; then
+          if ! git diff --quiet -- version.json; then
             git config user.name  "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add version.json
@@ -73,13 +71,16 @@ jobs:
             echo "version.json unchanged, skip commit"
           fi
 
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
       - name: Disable Jekyll
         run: echo > .nojekyll
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .   # ถ้าเว็บอยู่ในโฟลเดอร์ย่อย ให้เปลี่ยน path ตรงนี้
+          path: .
 
   deploy:
     needs: build
