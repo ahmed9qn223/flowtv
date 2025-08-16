@@ -1,41 +1,41 @@
 /* =========================================================
-   FLOWTV • app.js (clean + compact, category-aware)
-   - โหลดรายการช่องจาก channels.json หรือ window.__CHANNELS__
+   FLOWTV • app.js (final)
+   - อ่านข้อมูลจาก channels.json หรือ window.__CHANNELS__
    - สร้างแท็บหมวดหมู่อัตโนมัติ (ไม่มี "ทั้งหมด")
-   - เรนเดอร์การ์ดขนาดคงที่ (ให้ไปคุมสไตล์ใน styles.css)
-   - JW Player + ClearKey DRM
-   - ripple, playing glow, mobile toast, remember last
+   - ช่องขนาดคงที่, ripple, glow, mobile toast, remember last
+   - JW Player + ClearKey DRM (ปิด advertising เพื่อกัน error)
 ========================================================= */
 
+const $ = (id) => document.getElementById(id);
 const el = {
-  tabs:    document.getElementById('tabs'),
-  grid:    document.getElementById('channel-list'),
-  player:  document.getElementById('player'),
-  clock:   document.getElementById('clock'),
-  now:     document.getElementById('now-playing')
+  tabs:   $('tabs'),
+  grid:   $('channel-list'),
+  player: $('player'),
+  clock:  $('clock'),
+  now:    $('now-playing') // ถ้ามีในหน้า
 };
 
 let CHANNELS = [];
 let activeCat = null;
-let activeIdx = -1;
 let jw = null;
 let miniToast;
 
 /* ---------- Clock ---------- */
-function startClock() {
+(function startClock() {
+  if (!el.clock) return;
   const fmt = new Intl.DateTimeFormat('th-TH', {
     timeZone: 'Asia/Bangkok',
     hour12: false,
     day: '2-digit', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit', second: '2-digit'
   });
-  const tick = () => el.clock && (el.clock.textContent = fmt.format(new Date()));
+  const tick = () => (el.clock.textContent = fmt.format(new Date()));
   tick(); setInterval(tick, 1000);
-}
+})();
 
-/* ---------- Load data ---------- */
+/* ---------- Load channels ---------- */
 async function loadChannels() {
-  if (window.__CHANNELS__ && Array.isArray(window.__CHANNELS__.channels)) {
+  if (window.__CHANNELS__?.channels?.length) {
     return window.__CHANNELS__.channels;
   }
   const res = await fetch('channels.json', { cache: 'no-store' });
@@ -44,9 +44,10 @@ async function loadChannels() {
   return data.channels || [];
 }
 
-/* ---------- Build Tabs ---------- */
+/* ---------- Tabs ---------- */
 function buildTabs(categories) {
   el.tabs.innerHTML = '';
+  // เรียงตามความคุ้นเคย
   const order = ['ข่าว','บันเทิง','กีฬา','สารคดี','เพลง','หนัง'];
   categories.sort((a,b)=> order.indexOf(a) - order.indexOf(b));
 
@@ -56,7 +57,7 @@ function buildTabs(categories) {
     b.setAttribute('role','tab');
     b.setAttribute('aria-selected', i===0 ? 'true' : 'false');
     b.dataset.cat = cat;
-    b.textContent = cat;
+    b.innerHTML = `<span class="tab-label">${escapeHtml(cat)}</span>`;
     b.addEventListener('click', () => {
       [...el.tabs.querySelectorAll('.tab')].forEach(t=>t.setAttribute('aria-selected','false'));
       b.setAttribute('aria-selected','true');
@@ -67,57 +68,64 @@ function buildTabs(categories) {
   });
 
   activeCat = categories[0] || null;
+  if (categories.length <= 1) el.tabs.style.display = 'none';
 }
 
-/* ---------- Render Grid ---------- */
+/* ---------- Grid ---------- */
 function renderGrid() {
   const list = activeCat ? CHANNELS.filter(c => c.category === activeCat) : CHANNELS;
   el.grid.innerHTML = '';
-  activeIdx = -1;
 
   list.forEach((ch, idx) => {
-    const item = document.createElement('button');
-    item.className = 'channel';
-    item.dataset.category = ch.category || '';
-    item.setAttribute('aria-label', ch.name);
+    const card = document.createElement('button');
+    card.className = 'channel';
+    card.dataset.category = ch.category || '';
+    card.title = ch.name;
 
-    // ripple (ตำแหน่งคลิก)
-    item.addEventListener('pointerdown', e=>{
-      const r = item.getBoundingClientRect();
-      item.style.setProperty('--x', `${e.clientX - r.left}px`);
-      item.style.setProperty('--y', `${e.clientY - r.top}px`);
-      item.classList.add('pressed');
-      setTimeout(()=>item.classList.remove('pressed'), 520);
+    // ripple จุดคลิก
+    card.addEventListener('pointerdown', e=>{
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--x', `${e.clientX - r.left}px`);
+      card.style.setProperty('--y', `${e.clientY - r.top}px`);
+      card.classList.add('pressed');
+      setTimeout(()=>card.classList.remove('pressed'), 520);
     });
 
-    // click -> play
-    item.addEventListener('click', () => {
+    // กดเล่น
+    card.addEventListener('click', () => {
       el.grid.querySelectorAll('.channel.playing').forEach(n=>n.classList.remove('playing'));
-      item.classList.add('playing');
-      activeIdx = idx;
+      card.classList.add('playing');
       playChannel(ch);
       showMiniToast(ch.name);
-      // remember last(เฉพาะ id จาก src + keyId)
+      // จำช่องล่าสุด
       const lid = `${ch.src}|${ch?.drm?.clearkey?.keyId||''}`;
       localStorage.setItem('flowtv:last', lid);
+      // เลื่อนไปตัวเล่น
+      el.player?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
 
-    item.innerHTML = `
+    // รองรับคีย์บอร์ด
+    card.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
+    });
+
+    card.innerHTML = `
       <div class="ch-card">
-        <img class="ch-logo" loading="lazy" decoding="async" alt="${escapeHtml(ch.name)}"
-             src="${escapeAttr(ch.logo)}">
+        <img class="ch-logo" loading="lazy" decoding="async"
+             alt="${escapeHtml(ch.name)}" src="${escapeAttr(ch.logo)}"
+             onerror="this.style.opacity=0;this.nextElementSibling.classList.add('no-logo');">
         <div class="ch-name">${escapeHtml(ch.name)}</div>
       </div>
     `;
-    el.grid.appendChild(item);
-  });
+    el.grid.appendChild(card);
 
-  // auto play last in this category (ถ้าอยู่ category เดียวกัน)
-  const last = localStorage.getItem('flowtv:last');
-  if (last) {
-    const i = list.findIndex(c => `${c.src}|${c?.drm?.clearkey?.keyId||''}` === last);
-    if (i > -1) el.grid.children[i]?.click();
-  }
+    // auto-select ช่องล่าสุดในหมวดเดียวกัน
+    const last = localStorage.getItem('flowtv:last');
+    if (last && `${ch.src}|${ch?.drm?.clearkey?.keyId||''}` === last) {
+      // เล็กน้อยเพื่อให้ DOM สร้างเสร็จ
+      setTimeout(()=>card.click(), 0);
+    }
+  });
 }
 
 /* ---------- JW Player ---------- */
@@ -128,9 +136,13 @@ function ensureJW() {
     aspectratio: '16:9',
     autostart: false,
     preload: 'auto',
-    tracks: [],
-    // หลีกเลี่ยงการใช้ advertising เพื่อไม่ให้มี error instreamAdapter
+    controls: true,
+    displaytitle: false,
+    displaydescription: false,
+    advertising: { enabled: false } // กัน error instreamAdapter
   });
+  // แสดง error บนหน้าจอถ้ามี
+  jw.on('error', e => showMiniToast(`เล่นไม่ได้ (${e?.message||'Error'})`));
   return jw;
 }
 
@@ -139,10 +151,11 @@ function playChannel(ch) {
   const conf = {
     file: ch.src,
     type: ch.type || 'dash',
-    drm: ch.drm || undefined,
     title: ch.name,
     withCredentials: false
   };
+  if (ch.drm) conf.drm = ch.drm;
+
   jw.load(conf);
   jw.play();
 
@@ -159,11 +172,11 @@ function mountMiniToast() {
   return miniToast;
 }
 function showMiniToast(text) {
-  if (window.innerWidth > 860) return;     // เฉพาะมือถือ/จอเล็ก
+  if (window.innerWidth > 860) return; // โชว์เฉพาะมือถือ/จอเล็ก
   mountMiniToast();
   miniToast.textContent = text;
   miniToast.classList.add('show');
-  setTimeout(()=>miniToast.classList.remove('show'), 1800);
+  setTimeout(()=>miniToast.classList.remove('show'), 1600);
 }
 
 /* ---------- Utils ---------- */
@@ -171,24 +184,16 @@ function escapeHtml(s=''){return s.replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt
 function escapeAttr(s=''){return s.replace(/"/g,'&quot;')}
 
 /* ---------- Boot ---------- */
-(async function bootstrap(){
-  try{
-    startClock();
-
+(async function init(){
+  try {
     CHANNELS = await loadChannels();
-
-    // รวบรวมหมวดหมู่จากข้อมูลจริง
     const cats = [...new Set(CHANNELS.map(c=>c.category).filter(Boolean))];
     buildTabs(cats);
     renderGrid();
-
-    // ถ้ามีหมวดเดียว ให้ซ่อนแท็บ
-    if (cats.length <= 1 && el.tabs) el.tabs.style.display = 'none';
-  }catch(err){
+  } catch (err) {
     console.error(err);
-    // แสดงข้อความง่าย ๆ ในกริดกรณีโหลดข้อมูลไม่ได้
-    el.grid.innerHTML = `<div style="grid-column:1/-1;padding:24px;text-align:center;color:#ffb4b4;">
-      โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(err.message || String(err))}
+    el.grid.innerHTML = `<div style="grid-column:1/-1;padding:20px;text-align:center;color:#ffbcbc">
+      ${escapeHtml(err.message || String(err))}
     </div>`;
   }
 })();
