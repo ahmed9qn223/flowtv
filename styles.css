@@ -1,8 +1,12 @@
-/* ===================== styles.css (final) ===================== */
+/* ===================== styles.css (final – smaller tabs & channel cards) ===================== */
 :root{
   --bg:#0c0c0d; --panel:#141516; --panel-2:#101112; --text:#f2f2f2;
   --muted:#a0a7b0; --border:#242628; --maxw:1200px;
-  --tile-min:120px; --tile-h:150px; --tile-g:12px;
+
+  /* ขนาดการ์ดช่อง (ย่อเล็กลง) */
+  --tile-min:110px;   /* ความกว้างขั้นต่ำของช่อง */
+  --tile-h:134px;     /* ความสูงของการ์ดช่อง */
+  --tile-g:12px;      /* ระยะห่างระหว่างช่อง */
 }
 
 /* Base / Reset */
@@ -79,19 +83,26 @@ header{
   filter:blur(20px);opacity:.8;pointer-events:none;z-index:-1;
 }
 .tab{position:relative;flex:0 0 auto;cursor:pointer;scroll-snap-align:center;contain:paint;-webkit-tap-highlight-color:transparent}
+
+/* ขนาด tab-card (ย่อเล็กลง) */
 .tab-card{
-  width:clamp(82px,13.5vw,98px);height:clamp(70px,12vw,86px);border-radius:12px;
-  display:grid;grid-template-rows:auto auto;justify-items:center;align-content:center;gap:6px;
-  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+  width:clamp(70px,11vw,88px);
+  height:clamp(56px,9.8vw,70px);
+  border-radius:10px;
+  display:grid;grid-template-rows:auto auto;justify-items:center;align-content:center;gap:5px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
   box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 6px 14px rgba(0,0,0,.22);
-  color:#fff;transform:translateZ(0) scale(1);backface-visibility:hidden;will-change:transform;transition:transform .16s ease;
+  color:#fff;transform:translateZ(0) scale(1);
+  backface-visibility:hidden;will-change:transform;transition:transform .16s ease;
 }
 .tab:hover .tab-card{transform:translateZ(0) scale(1.015)}
 .tab:active .tab-card{transform:scale(.985)}
 .tab:focus-visible .tab-card{box-shadow:0 0 0 2px rgba(255,255,255,.85),0 10px 20px rgba(0,0,0,.30)}
 .tab[aria-selected="true"] .tab-card{transform:scale(1.03)}
-.tab-icon svg{width:24px;height:24px;display:block;color:#fff}
-.tab-label{font-weight:700;font-size:11.5px;letter-spacing:.2px}
+.tab-icon svg{width:22px;height:22px;display:block;color:#fff}
+.tab-label{font-weight:700;font-size:10.8px;letter-spacing:.2px}
+
 .tab{--accent:#ffffff}
 .tab::after{
   content:"";position:absolute;left:50%;bottom:-2px;width:56%;height:3px;border-radius:3px;background:var(--accent);
@@ -116,6 +127,7 @@ header{
 .grid.fade-in{animation:gridFade .24s ease both}
 @keyframes gridFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
+/* การ์ดช่อง (ย่อเล็กลง) */
 .channel{position:relative;border-radius:16px;cursor:pointer}
 .channel::after{
   content:"";position:absolute;inset:-6px;border-radius:20px;
@@ -126,11 +138,11 @@ header{
 @keyframes neonPulse{0%{filter:blur(10px);opacity:.55}50%{filter:blur(15px);opacity:.95}100%{filter:blur(10px);opacity:.55}}
 
 .ch-card{
-  position:relative;z-index:1;height:var(--tile-h)!important;
-  background:linear-gradient(180deg,var(--panel),var(--panel-2))!important;border:1px solid var(--border)!important;
-  border-radius:14px;padding:12px 10px 10px;box-shadow:0 8px 20px rgba(0,0,0,.18);
-  display:grid;grid-template-rows:1fr auto;gap:10px;place-items:center;
-  transition:transform .12s ease,border-color .15s ease,box-shadow .15s ease;overflow:hidden;
+  position:relative; z-index:1; height:var(--tile-h)!important;
+  background:linear-gradient(180deg,var(--panel),var(--panel-2))!important; border:1px solid var(--border)!important;
+  border-radius:12px; padding:10px 8px 8px; box-shadow:0 8px 20px rgba(0,0,0,.18);
+  display:grid; grid-template-rows:1fr auto; gap:8px; place-items:center;
+  transition:transform .12s ease,border-color .15s ease,box-shadow .15s ease; overflow:hidden;
 }
 .channel:hover .ch-card{
   transform:translateY(-1px);border-color:rgba(255,255,255,.7);
@@ -140,14 +152,19 @@ header{
 .channel.active .ch-card{border-color:#fff;box-shadow:0 0 0 1.5px #fff inset, 0 0 16px rgba(255,255,255,.6), 0 0 32px rgba(255,255,255,.35)}
 
 .logo-wrap{
-  width:calc(var(--tile-h)*0.52);height:calc(var(--tile-h)*0.52);border-radius:12px;
-  background:#0e0f10;display:grid;place-items:center;overflow:hidden;
+  width:calc(var(--tile-h)*0.48);
+  height:calc(var(--tile-h)*0.48);
+  border-radius:11px; background:#0e0f10; display:grid; place-items:center; overflow:hidden;
 }
-.logo{max-width:calc(var(--tile-h)*0.44);max-height:calc(var(--tile-h)*0.44)}
+.logo{
+  max-width:calc(var(--tile-h)*0.42);
+  max-height:calc(var(--tile-h)*0.42);
+}
 .name{
-  font-size:12.5px;text-align:center;color:#e7e7e7;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-  overflow:hidden;text-overflow:ellipsis;line-height:1.25;min-height:2.5em;
+  font-size:12.2px;
+  text-align:center; color:#e7e7e7;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  overflow:hidden; text-overflow:ellipsis; line-height:1.22; min-height:2.44em;
 }
 
 /* Ripple */
@@ -161,6 +178,24 @@ header{
   .grid.fade-in{animation:none}
 }
 
-/* Responsive */
-@media (max-width:900px){:root{--tile-min:108px;--tile-h:140px}}
-@media (max-width:520px){:root{--tile-min:100px;--tile-h:130px}.name{font-size:12px}}
+/* ---------- Responsive size tuning (ปรับละเอียดทุกแพลตฟอร์ม) ---------- */
+@media (max-width: 900px){
+  :root{ --tile-min:104px; --tile-h:126px; }
+}
+@media (max-width: 700px){
+  :root{ --tile-min:98px; --tile-h:120px; --tile-g:10px; }
+}
+@media (max-width: 520px){
+  :root{ --tile-min:92px; --tile-h:112px; --tile-g:8px; }
+  .tab-card{
+    width:clamp(64px,22vw,78px);
+    height:clamp(50px,18vw,64px);
+    border-radius:9px; gap:4px;
+  }
+  .tab-icon svg{width:20px;height:20px}
+  .tab-label{font-size:10.4px}
+}
+/* มือถือแนวนอนที่ความสูงน้อย: ลดความสูงการ์ดลงอีก */
+@media (max-width: 920px) and (orientation: landscape){
+  :root{ --tile-min:110px; --tile-h:110px; }
+}
