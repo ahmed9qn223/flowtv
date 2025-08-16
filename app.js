@@ -1,94 +1,132 @@
-/* ======================= app.js (no "ทั้งหมด" + add "หนัง") ======================= */
-const CHANNELS_URL = 'channels.json';
+/* ========================= app.js (FINAL) =========================
+   - อ่าน categories.json + channels.json (รองรับสคีมาเก่า/ใหม่)
+   - สร้างแท็บตาม categories.order (ไม่มี “ทั้งหมด”)
+   - จัดหมวดแบบมี rule + tags + fallback
+   - กริดการ์ดขนาดเท่ากัน + เอฟเฟกต์สลับหมวด (สอดคล้อง styles.css)
+   - รองรับโลโก้แนวนอนด้วย data-wide / logoWide / rule.useWideLogo
+   - JWPlayer: auto-fallback หลายแหล่ง, retry, mute-first บนมือถือ
+   - Now playing ใต้เวลา + Toast บนวิดีโอในมือถือ
+   - Histats badge มุมขวาบนของ header
+=================================================================== */
+
+const CH_URL  = 'channels.json';
+const CAT_URL = 'categories.json';
 const TIMEZONE = 'Asia/Bangkok';
 
-/* ลำดับแท็บใหม่: ไม่มี "ทั้งหมด" */
-const TABS = ['ข่าว', 'บันเทิง', 'กีฬา', 'สารคดี', 'เพลง', 'หนัง'];
-
-const SWITCH_OUT_MS = 140;
+const SWITCH_OUT_MS   = 140;
 const STAGGER_STEP_MS = 22;
 
+let categories = null;      // { order:[], default:"", rules:[...] }
+let channels   = [];        // รายการช่องทั้งหมด (รวมสคีมา)
+let currentFilter = '';     // ชื่อหมวดที่เลือก
+let currentIndex  = -1;     // index ของช่องใน "channels" ที่กำลังเล่น
+
+// ใส่ key ถ้ามี (จะไม่มีผลถ้าตั้งไว้แล้วที่ HTML)
 try { jwplayer.key = jwplayer.key || 'XSuP4qMl+9tK17QNb+4+th2Pm9AWgMO/cYH8CI0HGGr7bdjo'; } catch {}
 
-let channels = [];
-let currentFilter = TABS[0];
-let currentIndex = -1;
-let scrollOnNextPlay = false;
-
-document.addEventListener('DOMContentLoaded', init);
-
-function init(){
-  // clock
-  const clockEl = document.getElementById('clock');
-  function tick(){
-    if(!clockEl) return;
-    const now = new Date();
-    clockEl.textContent = new Intl.DateTimeFormat('th-TH',{
-      day:'2-digit', month:'short', year:'numeric',
-      hour:'2-digit', minute:'2-digit', second:'2-digit',
-      hour12:false, timeZone: TIMEZONE
-    }).format(now).replace(',', '');
-  }
-  if(clockEl){ tick(); setInterval(tick,1000); }
-
-  // now playing text (ใต้เวลา)
-  let nowEl = document.getElementById('now-playing');
-  if(!nowEl && clockEl && clockEl.parentNode){
-    nowEl = document.createElement('div');
-    nowEl.id = 'now-playing';
-    nowEl.className = 'now-playing';
-    nowEl.setAttribute('aria-live','polite');
-    clockEl.after(nowEl);
-  }
-  window.__setNowPlaying = (name='')=>{
-    if(!nowEl) return;
-    nowEl.textContent = name;
-    nowEl.title = name;
-    nowEl.classList.remove('swap'); void nowEl.offsetWidth; nowEl.classList.add('swap');
-  };
-
-  // Histats badge (ขวาบน)
+/* ------------------------ Boot ------------------------ */
+document.addEventListener('DOMContentLoaded', async () => {
+  mountClock();
+  mountNowPlayingContainer();
   mountHistatsTopRight();
 
-  // สร้างแท็บใหม่จาก TABS (ล้างของเดิม -> ไม่มี "ทั้งหมด")
+  await loadData();
+
   buildTabs();
+  setActiveTab((categories?.order?.[0]) || categories?.default || 'บันเทิง');
   centerTabsIfPossible();
   addEventListener('resize', debounce(centerTabsIfPossible,150));
   addEventListener('load', centerTabsIfPossible);
 
-  // โหลดช่อง
-  fetch(CHANNELS_URL,{cache:'no-store'})
-    .then(r=>r.json())
-    .then(data=>{
-      channels = Array.isArray(data) ? data : (data.channels || []);
-      setActiveTab(TABS[0]); // โชว์แท็บแรก
-      const start = Math.max(0, Math.min(channels.length-1, parseInt(localStorage.getItem('lastIndex')||'0',10)));
-      if(channels.length) play(start,{scroll:false}); else window.__setNowPlaying('');
-    })
-    .catch(err=>{
-      console.error('โหลด channels.json ไม่สำเร็จ:', err);
-      const grid = document.getElementById('channel-list');
-      if(grid) grid.innerHTML = `<div style="color:#fff;opacity:.85;text-align:center;padding:24px">โหลดรายการช่องไม่สำเร็จ</div>`;
-    });
+  // เล่นช่องที่เคยเล่นครั้งล่าสุด (ถ้ามี)
+  const lastId = safeGet('lastId');
+  if (lastId) {
+    const idx = channels.findIndex(c => c.id === lastId);
+    if (idx >= 0) playByIndex(idx, {scroll:false});
+  }
+});
+
+/* ------------------------ Load / Cache ------------------------ */
+async function loadData(){
+  const cacheKey = 'TV_DATA_CACHE_V1';
+  try {
+    const cache = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+    if (cache && Date.now() - cache.t < 12*60*60*1000) {
+      categories = cache.cat;
+      channels   = cache.ch;
+      return;
+    }
+  } catch {}
+
+  const [catRes, chRes] = await Promise.all([
+    fetch(CAT_URL, {cache:'no-store'}).then(r=>r.json()).catch(()=>null),
+    fetch(CH_URL, {cache:'no-store'}).then(r=>r.json())
+  ]);
+
+  categories = catRes || {
+    order: ['ข่าว','บันเทิง','กีฬา','สารคดี','เพลง','หนัง'],
+    default: 'บันเทิง',
+    rules: []
+  };
+
+  // รองรับสคีมาเก่า (เป็น array) / ใหม่ ({channels:[]})
+  channels = Array.isArray(chRes) ? chRes : (chRes.channels || []);
+
+  // เติม id ถ้ายังไม่มี
+  channels.forEach((c,i)=>{ if(!c.id) c.id = genIdFrom(c, i); });
+
+  localStorage.setItem('TV_DATA_CACHE_V1', JSON.stringify({t:Date.now(), cat:categories, ch:channels}));
 }
 
-/* ---------- Tabs ---------- */
+/* ------------------------ Header: Clock & Now Playing ------------------------ */
+function mountClock(){
+  const el = document.getElementById('clock');
+  if (!el) return;
+  const tick = () => {
+    const now = new Date();
+    el.textContent = new Intl.DateTimeFormat('th-TH',{
+      day:'2-digit', month:'short', year:'numeric',
+      hour:'2-digit', minute:'2-digit', second:'2-digit',
+      hour12:false, timeZone: TIMEZONE
+    }).format(now).replace(',', '');
+  };
+  tick();
+  setInterval(tick, 1000);
+}
+function mountNowPlayingContainer(){
+  const clock = document.getElementById('clock');
+  if (!clock) return;
+  let now = document.getElementById('now-playing');
+  if (!now) {
+    now = document.createElement('div');
+    now.id = 'now-playing';
+    now.className = 'now-playing';
+    now.setAttribute('aria-live','polite');
+    clock.after(now);
+  }
+  window.__setNowPlaying = (name='')=>{
+    now.textContent = name;
+    now.title = name;
+    now.classList.remove('swap'); void now.offsetWidth; now.classList.add('swap');
+  };
+}
+
+/* ------------------------ Tabs ------------------------ */
 function buildTabs(){
   const root = document.getElementById('tabs'); if(!root) return;
   root.innerHTML = '';
-  TABS.forEach(name=>{
+  (categories?.order || []).forEach(name=>{
     const btn = document.createElement('button');
     btn.className = 'tab';
     btn.dataset.filter = name;
     btn.setAttribute('aria-selected','false');
     btn.innerHTML = `
       <span class="tab-card">
-        <span class="tab-icon" aria-hidden="true">${getIconSVG(name)}</span>
+        <span class="tab-icon">${getIconSVG(name)}</span>
         <span class="tab-label">${name}</span>
       </span>`;
     root.appendChild(btn);
   });
-
   wireTabs(root);
 }
 function wireTabs(root){
@@ -106,127 +144,116 @@ function wireTabs(root){
   });
 }
 function setActiveTab(name){
-  if(!TABS.includes(name)) name = TABS[0];
   currentFilter = name;
-
   const root = document.getElementById('tabs');
   root.querySelectorAll('.tab').forEach(b=>{
     const sel = b.dataset.filter===name;
-    b.setAttribute('aria-selected', sel ? 'true':'false');
+    b.setAttribute('aria-selected', sel?'true':'false');
     if(sel) b.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'});
   });
 
-  const grid = document.getElementById('channel-list'); 
-  if(!grid) return;
+  const grid = ensureGrid();
   grid.classList.add('switch-out');
   setTimeout(()=>{
     grid.classList.remove('switch-out');
-    render({ withEnter:true });
+    render({withEnter:true});
   }, SWITCH_OUT_MS);
 }
 function centerTabsIfPossible(){
   const el = document.getElementById('tabs'); if(!el) return;
   el.classList.toggle('tabs--center', el.scrollWidth <= el.clientWidth + 1);
 }
-function getIconSVG(n){
-  const s='currentColor', w=2;
-  switch(n){
-    case 'ข่าว': return `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="14" height="14" rx="2" stroke="${s}" stroke-width="${w}"/><path d="M7 9h8M7 13h8M7 17h8" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/></svg>`;
-    case 'บันเทิง': return `<svg viewBox="0 0 24 24" fill="none"><path d="M12 4l2.7 5.5 6 .9-4.4 4.3 1 6-5.3-2.8-5.3 2.8 1-6L3.3 10.4l6-.9L12 4z" stroke="${s}" stroke-width="${w}" stroke-linejoin="round"/></svg>`;
-    case 'กีฬา': return `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="${s}" stroke-width="${w}"/><path d="M3 12h18" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/><path d="M12 3a9 9 0 0 1 0 18" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/><path d="M12 3a9 9 0 0 0 0 18" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/></svg>`;
-    case 'สารคดี': return `<svg viewBox="0 0 24 24" fill="none"><path d="M4 6h7a3 3 0 0 1 3 3v11H7a3 3 0 0 0-3 3V6z" stroke="${s}" stroke-width="${w}" stroke-linejoin="round"/><path d="M13 6h7a3 3 0 0 1 3 3v11h-7a3 3 0 0 0-3 3V6z" stroke="${s}" stroke-width="${w}" stroke-linejoin="round"/></svg>`;
-    case 'เพลง': return `<svg viewBox="0 0 24 24" fill="none"><path d="M14 4v9.5a2.5 2.5 0 1 1-2-2.45V8l-4 1v7a2 2 0 1 1-2-2V8.5l8-2.5Z" fill="${s}"/></svg>`;
-    case 'หนัง': return `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="12" rx="2" stroke="${s}" stroke-width="${w}"/><path d="M7 6v12M17 6v12" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/></svg>`;
-    default: return `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="${s}" stroke-width="${w}"/></svg>`;
+
+/* ------------------------ Category logic ------------------------ */
+function getCategory(ch){
+  if (ch.category) return ch.category;
+
+  // tags → category map
+  if (Array.isArray(ch.tags)) {
+    const t = ch.tags.map(x=>String(x).toLowerCase());
+    if (t.includes('news')) return 'ข่าว';
+    if (t.includes('sports')) return 'กีฬา';
+    if (t.includes('music')) return 'เพลง';
+    if (t.includes('documentary')) return 'สารคดี';
+    if (t.includes('movie') || t.includes('film')) return 'หนัง';
   }
+
+  // rules
+  const hay = `${ch.name||''} ${ch.logo||''} ${JSON.stringify(ch.tags||[])}`.toLowerCase();
+  const src0 = String((ch.sources?.[0]?.src) || ch.src || ch.file || '').toLowerCase();
+  for (const r of (categories?.rules || [])) {
+    const ok = (r.include||[]).some(pat=>{
+      try {
+        if (pat.startsWith('/') && pat.endsWith('/')) {
+          const re = new RegExp(pat.slice(1,-1),'i');
+          return re.test(hay) || re.test(src0);
+        }
+        const p = pat.toLowerCase();
+        return hay.includes(p) || src0.includes(p);
+      } catch { return false; }
+    });
+    if (ok) return r.category;
+  }
+  return categories?.default || 'บันเทิง';
 }
-function debounce(fn,wait=150){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),wait)}}
-
-/* ---------- Filter & Category guess ---------- */
-function filterChannels(list, tab){
-  // คืนเฉพาะหมวดที่เลือก
-  return list.filter(ch => (ch.category || guessCategory(ch)) === tab);
-}
-
-function guessCategory(ch){
-  const s = `${ch.name||''} ${ch.logo||''}`.toLowerCase();
-  const src = (ch.src || ch.file || '').toLowerCase();
-
-  // ===== หนัง =====
-  // ชื่อ/โลโก้ที่พบบ่อย
-  if (/(^|\s)(hbo|cinemax|mono\s?29\s?plus|mono29plus|3bb\s?asian|movie|movies|film|true\s?film|signature|hits|family)(\s|$)/.test(s))
-    return 'หนัง';
-  // ช่องตัวเลขที่เป็นหนัง: 101, 103–107, 109
-  if (/(\/101\/|\/103\/|\/104\/|\/105\/|\/106\/|\/107\/|\/109\/)/.test(src)) return 'หนัง';
-  // ไฟล์โลโก้ที่มักเป็นหนัง (เช่น R_0148/0149/0150/0151/0147)
-  if (/(r_0148|0149|0150|0151|0147)/.test(s)) return 'หนัง';
-
-  // ===== ข่าว =====
-  if (/(ข่าว|tnn|nation|thairath|nbt|pbs|jkn|workpoint\s?news)/.test(s)) return 'ข่าว';
-
-  // ===== กีฬา =====
-  if (/(sport|กีฬา|t\s?sports|3bb\s?sports|bein|true\s?sport|pptv\s?hd\s?36)/.test(s)) return 'กีฬา';
-
-  // ===== สารคดี =====
-  if (/(สารคดี|discovery|animal|nat.?geo|history|documentary|bbc\s?earth)/.test(s)) return 'สารคดี';
-
-  // ===== เพลง =====
-  if (/(เพลง|music|mtv|channel\s?v|music\s?hits)/.test(s)) return 'เพลง';
-
-  // อื่น ๆ จัดเข้าบันเทิง
-  return 'บันเทิง';
+function useWideLogo(ch){
+  if (ch.logoWide) return true;
+  const cat = getCategory(ch);
+  const rule = (categories?.rules||[]).find(r=>r.category===cat && r.useWideLogo);
+  return !!rule;
 }
 
-/* ---------- Render Grid ---------- */
+/* ------------------------ Render grid ------------------------ */
+function ensureGrid(){
+  const grid = document.getElementById('channel-list');
+  if (!grid.classList.contains('grid')) grid.classList.add('grid');
+  return grid;
+}
 function render(opt={withEnter:false}){
-  const wrap = document.getElementById('channel-list'); 
-  if(!wrap) return;
+  const grid = ensureGrid(); grid.innerHTML='';
 
-  const list = filterChannels(channels, currentFilter);
-  wrap.innerHTML = '';
+  const list = channels.filter(c => getCategory(c) === currentFilter);
+  const cols = computeGridCols(grid);
 
-  const cols = computeGridCols(wrap);
-
-  list.forEach((ch, i) => {
+  list.forEach((ch,i)=>{
     const btn = document.createElement('button');
     btn.className = 'channel';
-    btn.title = ch.name || 'ช่อง';
-
-    const cat = (ch.category || guessCategory(ch));
-    btn.dataset.category = cat;                           // ใช้ styling เฉพาะหมวด
+    btn.dataset.category = getCategory(ch);
     btn.dataset.globalIndex = String(channels.indexOf(ch));
+    if (useWideLogo(ch)) btn.dataset.wide = 'true';
+    btn.title = ch.name || 'ช่อง';
 
     btn.innerHTML = `
       <div class="ch-card">
         <div class="logo-wrap">
           <img class="logo" loading="lazy" decoding="async"
-               src="${escapeHtml(ch.logo||'')}"
-               alt="${escapeHtml(ch.name||'โลโก้ช่อง')}">
+               src="${escapeHtml(ch.logo || '')}" alt="${escapeHtml(ch.name||'โลโก้ช่อง')}">
         </div>
         <div class="name">${escapeHtml(ch.name||'ช่อง')}</div>
       </div>`;
 
     btn.addEventListener('click', e=>{
-      makeRipple(e, btn.querySelector('.ch-card'));
-      scrollOnNextPlay = true;
+      ripple(e, btn.querySelector('.ch-card'));
       playByChannel(ch);
+      scrollToPlayer();
     });
 
+    // คำนวณ order สำหรับเอฟเฟกต์ stagger
     const row = Math.floor(i / Math.max(cols,1));
     const col = i % Math.max(cols,1);
     const order = row + col;
     btn.style.setProperty('--i', order);
 
-    wrap.appendChild(btn);
+    grid.appendChild(btn);
   });
 
-  wrap.style.setProperty('--stagger', `${STAGGER_STEP_MS}ms`);
+  grid.style.setProperty('--stagger', `${STAGGER_STEP_MS}ms`);
 
-  if(opt.withEnter){
-    wrap.classList.add('switch-in');
-    const maxOrder = Math.max(...Array.from(wrap.children).map(el => +getComputedStyle(el).getPropertyValue('--i') || 0), 0);
+  if (opt.withEnter){
+    grid.classList.add('switch-in');
+    const maxOrder = Math.max(...Array.from(grid.children).map(el => +getComputedStyle(el).getPropertyValue('--i') || 0), 0);
     const total = (maxOrder * STAGGER_STEP_MS) + 420;
-    setTimeout(()=> wrap.classList.remove('switch-in'), Math.min(total, 1200));
+    setTimeout(()=> grid.classList.remove('switch-in'), Math.min(total, 1200));
   }
 
   highlight(currentIndex);
@@ -239,71 +266,100 @@ function computeGridCols(container){
   return Math.max(1, Math.floor((fullW + gap) / (tileW + gap)));
 }
 
-/* ---------- Player ---------- */
-function playByChannel(ch){ const i = channels.indexOf(ch); if(i>=0) play(i); }
-function play(i, opt={scroll:true}){
+/* ------------------------ Player ------------------------ */
+function playByChannel(ch){
+  const i = channels.indexOf(ch);
+  if (i >= 0) playByIndex(i);
+}
+function playByIndex(i, opt={scroll:true}){
   const ch = channels[i]; if(!ch) return;
   currentIndex = i;
+  safeSet('lastId', ch.id);
 
+  const srcList = buildSources(ch);
+  tryPlayJW(ch, srcList, 0);
+
+  window.__setNowPlaying?.(ch.name || '');
+  highlight(i);
+
+  if (opt.scroll ?? true) scrollToPlayer();
+  showMobileToast(ch.name || '');
+}
+function buildSources(ch){
+  // สคีมาใหม่
+  if (Array.isArray(ch.sources) && ch.sources.length){
+    return [...ch.sources].sort((a,b)=>(a.priority||99)-(b.priority||99));
+  }
+  // สคีมาเก่า
+  const s = ch.src || ch.file;
+  const t = ch.type || detectType(s);
+  const drm = ch.drm || (ch.keyId && ch.key ? {clearkey:{keyId:ch.keyId, key:ch.key}} : undefined);
+  return [{ src:s, type:t, drm }];
+}
+function tryPlayJW(ch, list, idx){
+  if (idx >= list.length) { console.warn('ทุกแหล่งเล่นไม่สำเร็จ:', ch.name); return; }
+  const s = list[idx];
+
+  const jwSrc = makeJwSource(s, ch);
   const player = jwplayer('player').setup({
-    playlist:[{ image: ch.poster || ch.logo || undefined, sources: [buildSource(ch)] }],
+    playlist: [{ image: ch.poster || ch.logo || undefined, sources: [jwSrc] }],
     width:'100%', aspectratio:'16:9', autostart:true,
-    mute:/iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
-    preload:'metadata', playbackRateControls:true,
-    displaytitle:false, displaydescription:false
+    mute: isMobile(), preload:'metadata',
+    displaytitle:false, displaydescription:false,
+    playbackRateControls:true
   });
 
-  player.once('playAttemptFailed',()=>{ player.setMute(true); player.play(true); });
-  player.on('error', e=>console.warn('Player error:', e));
-
-  window.__setNowPlaying(ch.name || '');
-  highlight(i);
-  try{ localStorage.setItem('lastIndex', String(i)); }catch{}
-
-  if((opt.scroll ?? true) && scrollOnNextPlay){ scrollToPlayer(); scrollOnNextPlay=false; }
+  player.once('playAttemptFailed', ()=>{ player.setMute(true); player.play(true); });
+  player.on('error', ()=> {
+    console.warn('แหล่งล้มเหลว ลองตัวถัดไป', s);
+    tryPlayJW(ch, list, idx+1);
+  });
 }
-function buildSource(ch){
-  const url = buildUrlWithProxyIfNeeded(ch);
-  const t = (ch.type || detectType(url) || 'auto').toLowerCase();
-  const src = { file:url };
-  if(t==='dash'){
-    src.type='dash';
-    const ck = ch.drm?.clearkey || (ch.keyId && ch.key ? {keyId:ch.keyId, key:ch.key} : null);
-    if(ck?.keyId && ck?.key) src.drm = { clearkey:{ keyId:ck.keyId, key:ck.key } };
-  }else if(t==='hls'){ src.type='hls'; }
-  return src;
+function makeJwSource(s, ch){
+  const file = wrapWithProxyIfNeeded(s.src || s.file || '', ch);
+  const type = (s.type || detectType(file)).toLowerCase();
+  const out = { file, type };
+  if (type==='dash' && s.drm?.clearkey?.keyId && s.drm?.clearkey?.key){
+    out.drm = { clearkey: { keyId: s.drm.clearkey.keyId, key: s.drm.clearkey.key } };
+  }
+  return out;
 }
 function detectType(u){ u=(u||'').split('?')[0].toLowerCase(); if(u.endsWith('.m3u8'))return'hls'; if(u.endsWith('.mpd'))return'dash'; return'auto'; }
-function buildUrlWithProxyIfNeeded(ch){
-  const raw = ch.src || ch.file || '';
-  if (window.PROXY_BASE && ch.proxy){
-    const payload = { src: raw, referrer: ch.referrer||'', ua: ch.ua||'', headers: ch.headers||{} };
+function wrapWithProxyIfNeeded(url, ch){
+  if (window.PROXY_BASE && (ch.proxy || false)) {
+    const payload = { src:url, referrer: ch.referrer||'', ua: ch.ua||'', headers: ch.headers||{} };
     const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
     return `${window.PROXY_BASE}/p/${b64}`;
   }
-  return raw;
+  return url;
 }
-
-/* ---------- UI helpers ---------- */
-function makeRipple(event, container){
-  if(!container) return;
-  const r = container.getBoundingClientRect();
-  const max = Math.max(r.width, r.height);
-  const ripple = document.createElement('span');
-  ripple.className = 'ripple';
-  ripple.style.width = ripple.style.height = `${max}px`;
-  ripple.style.left = `${event.clientX - r.left - max/2}px`;
-  ripple.style.top  = `${event.clientY - r.top  - max/2}px`;
-  const old = container.querySelector('.ripple'); if(old) old.remove();
-  container.appendChild(ripple);
-  ripple.addEventListener('animationend', ()=>ripple.remove(), { once:true });
+function showMobileToast(text){
+  if (!isMobile()) return;
+  let t = document.getElementById('mini-toast');
+  if (!t){
+    t = document.createElement('div');
+    t.id = 'mini-toast';
+    t.style.cssText = `
+      position:absolute; left:50%; top:10px; transform:translateX(-50%);
+      background:rgba(0,0,0,.65); color:#fff; padding:6px 10px; border-radius:8px;
+      font-size:13px; font-weight:600; z-index:9; pointer-events:none; opacity:0; transition:opacity .18s ease`;
+    const parent = document.getElementById('player');
+    parent.style.position = parent.style.position || 'relative';
+    parent.appendChild(t);
+  }
+  t.textContent = text;
+  requestAnimationFrame(()=>{ t.style.opacity = '1'; });
+  setTimeout(()=>{ t.style.opacity = '0'; }, 1500);
 }
+function isMobile(){ return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) }
 function scrollToPlayer(){
   const el = document.getElementById('player');
   const header = document.querySelector('header');
   const y = el.getBoundingClientRect().top + window.pageYOffset - ((header?.offsetHeight)||0) - 8;
   window.scrollTo({ top:y, behavior:'smooth' });
 }
+
+/* ------------------------ UI helpers ------------------------ */
 function highlight(globalIndex){
   document.querySelectorAll('.channel').forEach(el=>{
     const idx = Number(el.dataset.globalIndex);
@@ -311,13 +367,53 @@ function highlight(globalIndex){
     el.setAttribute('aria-pressed', idx === globalIndex ? 'true':'false');
   });
 }
+function ripple(event, container){
+  if(!container) return;
+  const r = container.getBoundingClientRect();
+  const max = Math.max(r.width, r.height);
+  const x = (event.clientX ?? (r.left + r.width/2)) - r.left;
+  const y = (event.clientY ?? (r.top  + r.height/2)) - r.top;
+  const s = document.createElement('span');
+  s.className = 'ripple';
+  s.style.width = s.style.height = `${max}px`;
+  s.style.left = `${x - max/2}px`;
+  s.style.top  = `${y - max/2}px`;
+  container.querySelector('.ripple')?.remove();
+  container.appendChild(s);
+  s.addEventListener('animationend', ()=>s.remove(), { once:true });
+}
 function escapeHtml(s){
   return String(s).replace(/[&<>"'`=\/]/g, c => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;'
   }[c]));
 }
+function debounce(fn,wait=150){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),wait)}}
+function safeGet(k){ try{ return localStorage.getItem(k); }catch{ return null; } }
+function safeSet(k,v){ try{ localStorage.setItem(k,v); }catch{} }
+function genIdFrom(ch,i){ return (ch.name?.toString().trim() || `ch-${i}`).toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,'') + '-' + i }
 
-/* ---------- Histats in header ---------- */
+/* ------------------------ Icons (filled) ------------------------ */
+function getIconSVG(n){
+  const c='currentColor';
+  switch(n){
+    case 'ข่าว':     // newspaper
+      return `<svg viewBox="0 0 24 24" fill="${c}"><path d="M4 6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v9a3 3 0 0 0 3 3H7a3 3 0 0 1-3-3V6zM8 8h6v2H8V8zm0 4h9v2H8v-2z"/></svg>`;
+    case 'บันเทิง':  // star
+      return `<svg viewBox="0 0 24 24" fill="${c}"><path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.6L12 18.7 6.2 21l1.1-6.6-4.7-4.6 6.5-.9L12 3z"/></svg>`;
+    case 'กีฬา':     // ball
+      return `<svg viewBox="0 0 24 24" fill="${c}"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 2a8 8 0 0 1 6.9 12.1A8 8 0 0 1 5.1 7.1 8 8 0 0 1 12 4z"/></svg>`;
+    case 'สารคดี':   // book
+      return `<svg viewBox="0 0 24 24" fill="${c}"><path d="M4 5a3 3 0 0 1 3-3h6v18H7a3 3 0 0 0-3 3V5zm10-3h3a3 3 0 0 1 3 3v18a3 3 0 0 0-3-3h-3V2z"/></svg>`;
+    case 'เพลง':     // music note
+      return `<svg viewBox="0 0 24 24" fill="${c}"><path d="M14 3v8.8a3.2 3.2 0 1 1-2-3V7L6 8.5V17a3 3 0 1 1-2-2.83V6.9L14 3z"/></svg>`;
+    case 'หนัง':     // clapper
+      return `<svg viewBox="0 0 24 24" fill="${c}"><path d="M21 10v7a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-7h18zM4.7 4.1l1.7 3.1h4.2L8.9 4.1h3.8l1.7 3.1h4.2L16.8 4.1H19a2 2 0 0 1 2 2v2H3V6.1a2 2 0 0 1 1.7-2z"/></svg>`;
+    default:          // square
+      return `<svg viewBox="0 0 24 24" fill="${c}"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>`;
+  }
+}
+
+/* ------------------------ Histats (top-right in header) ------------------------ */
 function mountHistatsTopRight(){
   const anchor = document.querySelector('.h-wrap') || document.querySelector('header') || document.body;
   let holder = document.getElementById('histats_counter');
@@ -332,6 +428,7 @@ function mountHistatsTopRight(){
   const hs = document.createElement('script'); hs.type='text/javascript'; hs.async=true; hs.src='//s10.histats.com/js15_giftop_as.js';
   (document.head || document.body).appendChild(hs);
 
+  // ย้ายตัว counter เข้า holder เมื่อโหลดเสร็จ
   const move = ()=>{ const c=document.getElementById('histatsC'); if(c && !holder.contains(c)){ holder.appendChild(c); return; } requestAnimationFrame(move); };
   move();
 }
