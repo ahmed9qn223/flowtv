@@ -1,268 +1,257 @@
-/* ===========================
-   FLOWTV - Clean Responsive UI
-   =========================== */
+/* ===================== styles.css (tuned) =====================
+   - Glass header + เวลา + now playing
+   - Tabs “Badge กลมโปร่ง” (icon เท่ากันทุกหมวด)
+   - กริดช่องคงที่เท่ากันทุกอุปกรณ์ + เอฟเฟกต์สลับหมวด
+   - หมวด “หนัง” ใช้โลโก้แนวนอนยาว (ปรับขนาดดีขึ้น)
+   - ป้าย Histats มุมขวาบนเฮดเดอร์ (scale อัตโนมัติ)
+=============================================================== */
 
+/* ---------- Root tokens ---------- */
 :root{
-  --bg: #0b0f14;
-  --panel: #121821;
-  --panel-2: #0f151d;
-  --muted: #9fb0c1;
-  --text: #dbe7f3;
-  --accent: #46a4ff;
-  --accent-2: #00d1ff;
+  --bg:#0c0c0d; --panel:#141516; --panel-2:#101112; --text:#f2f2f2;
+  --muted:#a0a7b0; --border:#242628; --maxw:1200px;
 
-  /* layout */
-  --maxw: 1200px;
-  --gap: 12px;
+  /* การ์ดช่อง (คงที่จริงด้วย grid แบบคอลัมน์คงที่) */
+  --tile-w:104px;              /* ความกว้างการ์ดคงที่ */
+  --tile-h:120px;              /* ความสูงการ์ดคงที่ */
+  --tile-g:10px;               /* ช่องไฟระหว่างการ์ด */
 
-  /* tabs */
-  --tab-w: clamp(86px, 13vw, 120px);
-  --tab-h: 68px;
-  --tab-radius: 14px;
+  /* Tabs */
+  --tab-gap:12px;              /* icon ↔ label */
 
-  /* cards */
-  --tile-min: 150px;      /* กว้างขั้นต่ำต่อคอลัมน์ */
-  --tile-ratio: 4/3;      /* สัดส่วนการ์ด */
-  --tile-radius: 16px;
-  --logo: 56px;           /* ขนาดโลโก้ช่องบนเดสก์ทอป */
-  --logo-m: 48px;         /* มือถือ */
+  /* Tab icon badge */
+  --tabBadge:40px;             /* เส้นผ่านศูนย์กลางแบดจ์ */
+  --tabBadgeSelScale:1.04;     /* ขยายตอนเลือกเล็กน้อย */
 }
 
-* { box-sizing: border-box; }
-
-html,body{
-  height:100%;
-  margin:0;
-  background:
-    radial-gradient(1200px 600px at 50% -200px, #182233 0%, transparent 60%),
-    linear-gradient(#0a0f15,#080c11) fixed;
-  background-color: var(--bg);
-  color: var(--text);
-  font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans Thai", sans-serif;
+/* ---------- Base ---------- */
+*{box-sizing:border-box}
+html,body{height:100%}
+html,body{background:var(--bg)!important;color:var(--text)}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{
+  margin:0; display:flex; flex-direction:column; overflow-x:hidden;
+  font-family:ui-sans-serif,system-ui,-apple-system,"Sarabun",Arial,"Segoe UI",Tahoma;
+  scroll-behavior:smooth;
+}
+button.tab,button.channel{
+  -webkit-appearance:none; appearance:none; border:0; background:transparent;
+  padding:0; margin:0; color:inherit; line-height:1; box-shadow:none; outline:0;
 }
 
-/* -------- Header -------- */
+/* ---------- Header ---------- */
 header{
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: linear-gradient(180deg, rgba(7,10,15,.95), rgba(7,10,15,.75));
+  position:sticky; top:0; z-index:20;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,0));
   backdrop-filter: blur(6px);
-  border-bottom: 1px solid rgba(255,255,255,.05);
 }
 .h-wrap{
-  max-width: var(--maxw);
-  margin: 0 auto;
-  padding: 8px 14px 10px;
-  display: grid;
-  grid-template-columns: 1fr;
-  justify-items: center;
+  position:relative; width:min(100%,var(--maxw)); margin:auto;
+  padding:10px 14px; display:grid; justify-items:center; gap:4px;
 }
-.clock{
-  font-weight: 700;
-  letter-spacing: .2px;
+.clock{font-weight:700;font-size:clamp(15px,2.3vw,19px);letter-spacing:.2px;text-align:center}
+.now-playing{
+  margin-top:2px;font-size:clamp(13px,2vw,16px);font-weight:600;opacity:.92;
+  text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
-.sub{
-  margin-top: 2px;
-  color: var(--muted);
-  font-size: 12px;
-}
+.now-playing.swap{animation:npFade .24s ease both}
+@keyframes npFade{from{opacity:0;transform:translateY(4px)}to{opacity:.92;transform:none}}
 
-/* -------- Main container -------- */
-.app{
-  max-width: var(--maxw);
-  margin: 10px auto 60px;
-  padding: 0 14px;
-}
-
-/* -------- Player -------- */
-#player{
-  width: 100%;
-  aspect-ratio: 16/9;
-  background: #05080c;
-  border: 1px solid rgba(255,255,255,.06);
-  border-radius: 18px;
-  box-shadow: 0 6px 18px rgba(0,0,0,.45) inset, 0 10px 30px rgba(0,0,0,.35);
-  overflow: hidden;
-}
-#jw-holder, #html5video, #player video{
-  width:100%; height:100%;
-}
-
-/* -------- Tabs -------- */
-.tabs{
-  margin: 14px 0 8px;
-  display: flex;
-  gap: var(--gap);
-  overflow-x: auto;
-  padding: 6px 2px 8px;
-  scrollbar-width: thin;
-}
-.tabs::-webkit-scrollbar{ height:8px }
-.tabs::-webkit-scrollbar-thumb{ background:#1f2835; border-radius:10px }
-
-.tab{
-  flex: 0 0 var(--tab-w);
-  height: var(--tab-h);
-  border-radius: var(--tab-radius);
-  border: 1px solid rgba(255,255,255,.06);
-  background: linear-gradient(180deg, #121821, #0e141c);
-  color: var(--text);
-  font-weight: 600;
-  letter-spacing:.2px;
-  display: grid;
-  place-items: center;
-  position: relative;
-  transition: transform .12s ease, border-color .2s ease, box-shadow .2s ease;
-  box-shadow: 0 3px 12px rgba(0,0,0,.35);
-}
-.tab[aria-selected="true"]{
-  outline: none;
-  border-color: rgba(70,164,255,.65);
-  box-shadow: 0 8px 24px rgba(70,164,255,.16);
-}
-.tab[aria-selected="true"]::after{
-  content:'';
-  position:absolute; left:10px; right:10px; bottom:6px;
-  height: 3px; border-radius: 6px;
-  background: linear-gradient(90deg, var(--accent), var(--accent-2));
-}
-.tab:active{ transform: translateY(1px) }
-
-/* -------- Grid of channels -------- */
-.grid{
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min), 1fr));
-  gap: var(--gap);
-  margin-top: 10px;
-}
-
-/* Card keeps same size by aspect-ratio */
-.ch-card{
-  display: block;
-  width: 100%;
-  aspect-ratio: var(--tile-ratio);
-  border-radius: var(--tile-radius);
-  border: 1px solid rgba(255,255,255,.06);
-  background: radial-gradient(120% 120% at 50% -20%, #16202f 0%, #0f151d 58%);
-  position: relative;
-  overflow: hidden;
-  padding: 0;
-  cursor: pointer;
-  transition: transform .12s ease, box-shadow .18s ease, border-color .18s ease;
-  box-shadow: 0 6px 18px rgba(0,0,0,.35);
-}
-.ch-card:hover{
-  transform: translateY(-2px);
-  border-color: rgba(70,164,255,.45);
-  box-shadow: 0 16px 30px rgba(0,0,0,.45), 0 8px 26px rgba(70,164,255,.15);
-}
-
-.ch-inner{
-  position:absolute; inset:0;
-  display:grid; place-items:center;
-  padding: 10px;
-  text-align:center;
-}
-
-.ch-logo{
-  width: var(--logo);
-  height: var(--logo);
-  object-fit: contain;
-  filter: drop-shadow(0 1px 6px rgba(0,0,0,.45));
-  margin-bottom: 8px;
-}
-
-.ch-name{
-  max-width: 92%;
-  color: var(--text);
-  font-weight: 700;
-  letter-spacing:.2px;
-  font-size: 13px;
-  line-height: 1.35;
-  text-wrap: balance;
-  text-shadow: 0 1px 0 rgba(0,0,0,.35);
-  opacity: .95;
-}
-
-/* -------- helper texts -------- */
-.tip{
-  margin: 12px 2px 0;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-/* -------- Notices (update / error) -------- */
-.notice-host{
-  max-width: var(--maxw);
-  margin: 10px auto 0;
-  padding: 0 14px;
-}
-.notice{
-  border-radius: 14px;
-  padding: 14px 14px 12px;
-  margin: 8px 0;
-  border: 1px solid rgba(255,255,255,.08);
-  box-shadow: 0 10px 30px rgba(0,0,0,.35);
-}
-.notice--update{ background: linear-gradient(180deg, #10212e, #0f1824) }
-.notice--error{  background: linear-gradient(180deg, #2a0f15, #1c0d11) }
-.notice-title{ font-weight:800; letter-spacing:.2px; margin-bottom:4px }
-.notice-msg{ color: var(--muted); margin-bottom:10px }
-.notice-actions{ display:flex; flex-wrap:wrap; gap:8px }
-.btn{
-  border:1px solid rgba(255,255,255,.1);
-  background:#121821;
-  color:#e9f3ff;
-  padding:8px 12px; border-radius:10px;
-  cursor:pointer; font-weight:600;
-}
-.btn.primary{
-  background: linear-gradient(90deg, var(--accent), var(--accent-2));
-  border-color: transparent; color:#001019;
-}
-.btn.danger{
-  background: linear-gradient(90deg, #ff6b6b, #ff9966);
-  border-color: transparent; color:#200;
-}
-
-/* -------- Toast (mobile) -------- */
-.now-playing-toast{
-  position: fixed; left:50%; transform:translateX(-50%) translateY(20px);
-  bottom: 82px; z-index: 40;
-  background: rgba(8,12,18,.86);
-  border:1px solid rgba(255,255,255,.08);
-  color:#e9f3ff; padding:10px 14px; border-radius:12px;
-  box-shadow: 0 10px 26px rgba(0,0,0,.45);
-  opacity:0; pointer-events:none; transition: opacity .2s, transform .2s;
-}
-.now-playing-toast.show{ opacity:1; transform:translateX(-50%) translateY(0) }
-
-/* -------- Histats badge (ใน header ขวา) -------- */
+/* Histats badge (ขวาบน) */
 #histats_counter{
-  position: absolute;
-  right: 8px; top: 8px; /* พอดีกับ header */
-  transform: scale(.9);
-  transform-origin: top right;
-  pointer-events: none; /* ไม่บังการคลิก UI */
+  position:absolute; top:4px; right:4px; z-index:30; line-height:0;
+  transform:scale(.82); transform-origin:top right;
+  pointer-events:none; /* ไม่บังการคลิก */
+}
+#histats_counter #histatsC{ position:static !important }
+#histats_counter img{ opacity:.9; filter:drop-shadow(0 1px 2px rgba(0,0,0,.45)) }
+@media (max-width:640px){ #histats_counter{ transform:scale(.72) } }
+@media (max-width:480px){ #histats_counter{ transform:scale(.64) } }
+@media (max-width:390px){ #histats_counter{ transform:scale(.58) } }
+
+/* ---------- App / Player ---------- */
+.app{width:min(100%,var(--maxw));margin:auto;padding:10px 14px 60px;flex:1 0 auto}
+#player{
+  width:100%; aspect-ratio:16/9; border-radius:14px; overflow:hidden;
+  border:1px solid rgba(255,255,255,.06);
+  box-shadow: 0 8px 28px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
 }
 
-/* -------- Responsive Tweaks -------- */
-@media (max-width: 900px){
-  :root{
-    --tile-min: 140px;
-    --logo: var(--logo-m);
-  }
+/* ---------- Tabs: Glass + Circular badge icons ---------- */
+.tabs{
+  position:relative; display:flex; gap:10px; align-items:center; overflow-x:auto;
+  -webkit-overflow-scrolling:touch; padding:12px 10px; margin:12px 0 10px;
+  scrollbar-gutter:stable both-edges; justify-content:flex-start; scroll-snap-type:x proximity;
 }
-@media (max-width: 640px){
-  :root{
-    --tile-min: 46vw;    /* 2 คอลัมน์บนมือถือ */
-    --tab-h: 64px;
-  }
-  .h-wrap{ padding: 10px 12px }
-  .clock{ font-size: 15px }
-  .ch-name{ font-size: 12.5px }
+.tabs::-webkit-scrollbar{height:6px}
+.tabs::-webkit-scrollbar-thumb{background:#2b2d30;border-radius:8px}
+.tabs.tabs--center{justify-content:center}
+/* หน้ากว้างมาก: จัดแท็บให้อยู่กึ่งกลางอัตโนมัติ */
+@media (min-width:980px){ .tabs{ justify-content:center } }
+
+.tabs::before{
+  content:""; position:absolute; inset:0; pointer-events:none; z-index:-1;
+  background:
+    radial-gradient(120% 80% at 10% 0%, rgba(99,102,241,.22) 0%, transparent 45%),
+    radial-gradient(120% 80% at 90% 100%, rgba(168,85,247,.22) 0%, transparent 45%),
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0));
+  filter:blur(20px); opacity:.8;
 }
-@media (min-width: 1280px){
-  :root{ --tile-min: 180px; --logo: 64px }
+.tab{position:relative; flex:0 0 auto; cursor:pointer; scroll-snap-align:center; -webkit-tap-highlight-color:transparent}
+.tab-card{
+  width:clamp(70px,11vw,88px); height:clamp(56px,9.8vw,70px);
+  border-radius:10px; display:grid; grid-template-rows:auto auto; place-items:center;
+  gap:var(--tab-gap);
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 6px 14px rgba(0,0,0,.22);
+  color:#fff; transform:translateZ(0) scale(1); transition:transform .16s ease;
+}
+.tab:hover .tab-card{transform:scale(1.015)}
+.tab:active .tab-card{transform:scale(.985)}
+.tab[aria-selected="true"] .tab-card{transform:scale(1.03)}
+.tab-label{font-weight:700;font-size:10.8px;letter-spacing:.2px}
+
+/* Badge กลมโปร่ง + ไอคอนเติมเต็ม */
+.tab-icon{
+  position:relative; width:var(--tabBadge); height:var(--tabBadge);
+  display:grid; place-items:center; line-height:0;
+}
+.tab-icon::before{
+  content:""; position:absolute; inset:0; border-radius:50%;
+  background:
+    radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,.18), rgba(255,255,255,.06)),
+    linear-gradient(180deg, rgba(0,0,0,.38), rgba(0,0,0,.58));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 8px 16px rgba(0,0,0,.25);
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.tab-icon svg{
+  width:60%; height:60%; display:block; color:#fff; opacity:.96; z-index:1;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.6));
+}
+/* เมื่อเลือก: ไล่โทนตาม --accent */
+.tab{--accent:#ffffff}
+.tab[aria-selected="true"] .tab-icon::before{
+  background:
+    radial-gradient(120% 120% at 30% 20%, color-mix(in srgb, var(--accent) 55%, white) 0%, transparent 60%),
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 22%, #1f2937), color-mix(in srgb, var(--accent) 38%, #111827));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45),
+              0 10px 22px color-mix(in srgb, var(--accent) 40%, transparent);
+  transform: scale(var(--tabBadgeSelScale));
+}
+
+/* เส้นเน้นใต้แท็บตามหมวด */
+.tab::after{
+  content:""; position:absolute; left:50%; bottom:-2px; width:56%; height:3px; border-radius:3px; background:var(--accent);
+  box-shadow:0 2px 10px color-mix(in srgb, var(--accent) 60%, transparent);
+  transform:translate3d(-50%,0,0) scaleX(0); transform-origin:center; opacity:0;
+  transition:transform .22s ease, opacity .22s ease;
+}
+.tab[aria-selected="true"]::after{transform:translate3d(-50%,0,0) scaleX(1);opacity:1}
+
+/* สี accent รายหมวด */
+.tab[data-filter="ข่าว"]{--accent:#ef4444}
+.tab[data-filter="บันเทิง"]{--accent:#f59e0b}
+.tab[data-filter="กีฬา"]{--accent:#22c55e}
+.tab[data-filter="สารคดี"]{--accent:#06b6d4}
+.tab[data-filter="เพลง"]{--accent:#a855f7}
+.tab[data-filter="หนัง"]{--accent:#f97316}
+
+/* ---------- Grid (การ์ดเท่ากันจริง) ---------- */
+.grid{
+  margin-top:10px; padding-bottom:16px;
+  display:grid; gap:var(--tile-g);
+  /* คอลัมน์คงที่: ความกว้าง = --tile-w ทุกคอลัมน์, จัดกลาง */
+  grid-template-columns:repeat(auto-fill, minmax(var(--tile-w), var(--tile-w)));
+  grid-auto-rows:var(--tile-h);
+  justify-content:center; align-content:start;
+  --stagger:22ms;
+}
+/* สลับหมวด: ออก */
+.grid.switch-out .ch-card{animation:tileOut .16s ease-out forwards; will-change:transform,opacity,filter}
+@keyframes tileOut{from{opacity:1;transform:scale(1) translateY(0);filter:blur(0)}to{opacity:0;transform:scale(.96) translateY(4px);filter:blur(2px)}}
+/* สลับหมวด: เข้าแบบ stagger */
+.grid.switch-in .ch-card{
+  opacity:0; transform:translateY(8px) scale(.96); filter:blur(2px);
+  animation:tileIn .34s cubic-bezier(.2,.7,.2,1) forwards;
+  animation-delay:calc(var(--stagger) * var(--i,0));
+  will-change:transform,opacity,filter;
+}
+@keyframes tileIn{to{opacity:1;transform:none;filter:none}}
+.grid.switch-out,.grid.switch-in{contain:paint}
+
+/* ---------- Channel card ---------- */
+.channel{position:relative;width:var(--tile-w);height:var(--tile-h);border-radius:14px;cursor:pointer;transform:translateZ(0)}
+.channel::after{
+  content:"";position:absolute;inset:-6px;border-radius:18px;
+  background:radial-gradient(60% 60% at 50% 50%, rgba(255,255,255,.55) 0%, transparent 70%);
+  filter:blur(12px);opacity:0;transition:opacity .25s ease;pointer-events:none;z-index:0;
+}
+.channel:hover::after,.channel.active::after{opacity:.9;animation:neonPulse 2.4s ease-in-out infinite}
+@keyframes neonPulse{0%{filter:blur(9px);opacity:.5}50%{filter:blur(14px);opacity:.95}100%{filter:blur(9px);opacity:.5}}
+
+.ch-card{
+  position:relative; z-index:1; width:100%; height:100%;
+  background:linear-gradient(180deg,var(--panel),var(--panel-2));
+  border:1px solid var(--border); border-radius:12px;
+  padding:9px 8px 8px; box-shadow:0 6px 16px rgba(0,0,0,.18);
+  display:grid; grid-template-rows:1fr auto; gap:6px; place-items:center; overflow:hidden;
+  transition:transform .12s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.channel:hover .ch-card{
+  transform:translateY(-1px);border-color:rgba(255,255,255,.7);
+  box-shadow:0 0 0 1px rgba(255,255,255,.75) inset, 0 0 10px rgba(255,255,255,.42), 0 0 20px rgba(255,255,255,.22);
+}
+.channel:active .ch-card{transform:scale(.985)}
+.channel.active .ch-card{border-color:#fff;box-shadow:0 0 0 1.4px #fff inset, 0 0 14px rgba(255,255,255,.6), 0 0 28px rgba(255,255,255,.32)}
+
+/* โลโก้ปกติ (สี่เหลี่ยมจัตุรัส) */
+.logo-wrap{
+  width:calc(var(--tile-h)*0.46); height:calc(var(--tile-h)*0.46);
+  border-radius:10px; background:#0e0f10; display:grid; place-items:center; overflow:hidden;
+}
+.logo{display:block; max-width:calc(var(--tile-h)*0.40); max-height:calc(var(--tile-h)*0.40)}
+
+/* หมวด “หนัง” : โลโก้แนวนอนยาว (ปรับ scale ให้อ่านง่ายขึ้น) */
+.channel[data-category="หนัง"] .logo-wrap{
+  width: calc(var(--tile-w) * 0.86);
+  height: calc(var(--tile-h) * 0.34);
+  margin-top:2px;
+}
+.channel[data-category="หนัง"] .logo{
+  width:92%; height:80%; object-fit:contain; max-width:none; max-height:none;
+}
+@media (max-width:420px){
+  .channel[data-category="หนัง"] .logo-wrap{ height: calc(var(--tile-h) * 0.30); }
+}
+
+/* ชื่อช่อง 2 บรรทัดคงที่เสมอ */
+.name{
+  font-size:11.8px; line-height:1.2; height:calc(1.2em * 2);
+  text-align:center; color:#e7e7e7;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  overflow:hidden; text-overflow:ellipsis;
+}
+
+/* Ripple */
+.ripple{position:absolute;border-radius:50%;pointer-events:none;transform:scale(0);opacity:.35;background:#fff;animation:ripple .55s ease-out;mix-blend-mode:overlay}
+@keyframes ripple{to{transform:scale(8);opacity:0}}
+
+/* ---------- Reduce motion ---------- */
+@media (prefers-reduced-motion:reduce){
+  .tab-card{transition:none}
+  .tab:hover .tab-card,.tab[aria-selected="true"] .tab-card{transform:none}
+  .grid.switch-out .ch-card,.grid.switch-in .ch-card{animation:none}
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1200px){ :root{ --tile-w:100px; --tile-h:116px; } }
+@media (max-width:900px) { :root{ --tile-w:98px;  --tile-h:112px; } }
+@media (max-width:700px) { :root{ --tile-w:94px;  --tile-h:108px; --tile-g:9px; } }
+@media (max-width:520px) { :root{ --tile-w:90px;  --tile-h:104px; --tile-g:8px; } }
+@media (max-width:390px) { :root{ --tile-w:86px;  --tile-h:100px; } }
+/* มือถือแนวนอน/จอเตี้ย: ลดความสูงการ์ดให้พอดีบรรทัด */
+@media (max-height:420px) and (orientation:landscape){
+  :root{ --tile-h:96px; }
 }
