@@ -1,13 +1,16 @@
-/* ======================= app.js (final – no title overlay) ======================= */
-/* - JW Player (HLS/DASH + ClearKey)
-   - Glass tabs + uniform channel grid (IDs expected: clock, now-playing, tabs, channel-list, player)
-   - Histats counter pinned to the RIGHT inside header (.h-wrap), next to date/time (mode 10024)
-   - Suppress JW title overlay on mobile (no title in playlist + displaytitle=false)
+/* ======================= app.js (final – stagger category switch) ======================= */
+/* - JW Player (HLS/DASH + ClearKey) + no title overlay
+   - Glass tabs, equal-size channel grid
+   - Histats counter on right inside header (.h-wrap), mode 10024
+   - Category switch effect: exit -> render -> enter with stagger
 */
 
 const CHANNELS_URL = 'channels.json';
 const TIMEZONE = 'Asia/Bangkok';
 const TABS = ['ทั้งหมด','ข่าว','บันเทิง','กีฬา','สารคดี','เพลง'];
+
+const SWITCH_OUT_MS = 140;   // ระยะเวลาช่วง "ออก"
+const STAGGER_STEP_MS = 22;  // ดีเลย์ต่อใบตอน "เข้า"
 
 // ใส่คีย์ถ้ายังไม่ได้ตั้งใน HTML
 try { jwplayer.key = jwplayer.key || 'XSuP4qMl+9tK17QNb+4+th2Pm9AWgMO/cYH8CI0HGGr7bdjo'; } catch {}
@@ -64,7 +67,7 @@ function init(){
     .then(r=>r.json())
     .then(data=>{
       channels = Array.isArray(data) ? data : (data.channels || []);
-      render();
+      render(); // first render (no enter anim)
       const start = Math.max(0, Math.min(channels.length-1, parseInt(localStorage.getItem('lastIndex')||'0',10)));
       if(channels.length) play(start,{scroll:false}); else window.__setNowPlaying('');
     })
@@ -106,13 +109,25 @@ function wireTabs(){
 function setActiveTab(name){
   if(!TABS.includes(name)) name='ทั้งหมด';
   currentFilter = name;
+
+  // ไฮไลต์แท็บ
   document.querySelectorAll('#tabs .tab').forEach(b=>{
     const sel = b.dataset.filter===name;
     b.setAttribute('aria-selected', sel ? 'true':'false');
     if(sel) b.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'});
   });
-  const grid = document.getElementById('channel-list'); if(!grid) return;
-  grid.classList.remove('fade-in'); void grid.offsetWidth; render(); grid.classList.add('fade-in');
+
+  const grid = document.getElementById('channel-list'); 
+  if(!grid) return;
+
+  // 1) เล่นเอฟเฟกต์ "ออก"
+  grid.classList.add('switch-out');
+
+  // 2) หลังจากออกเสร็จ -> render ใหม่ + เล่น "เข้า"
+  setTimeout(()=>{
+    grid.classList.remove('switch-out');
+    render({ withEnter:true });
+  }, SWITCH_OUT_MS);
 }
 function centerTabsIfPossible(){
   const el = document.getElementById('tabs'); if(!el) return;
@@ -146,13 +161,18 @@ function guessCategory(ch){
   return 'บันเทิง';
 }
 
-/* -------------------- RENDER GRID -------------------- */
-function render(){
-  const wrap = document.getElementById('channel-list'); if(!wrap) return;
+/* -------------------- RENDER GRID (with stagger) -------------------- */
+function render(opt={withEnter:false}){
+  const wrap = document.getElementById('channel-list'); 
+  if(!wrap) return;
+
   const list = filterChannels(channels, currentFilter);
   wrap.innerHTML = '';
 
-  list.forEach(ch=>{
+  // คอลัมน์คร่าว ๆ เพื่อคำนวณดีเลย์แบบทแยง
+  const cols = computeGridCols(wrap);
+
+  list.forEach((ch, i) => {
     const btn = document.createElement('button');
     btn.className = 'channel';
     btn.title = ch.name || 'ช่อง';
@@ -166,15 +186,43 @@ function render(){
         </div>
         <div class="name">${escapeHtml(ch.name||'ช่อง')}</div>
       </div>`;
+
+    // ripple + เล่นช่อง
     btn.addEventListener('click', e=>{
       makeRipple(e, btn.querySelector('.ch-card'));
       scrollOnNextPlay = true;
       playByChannel(ch);
     });
+
+    // order ดีเลย์แบบ wave-diagonal
+    const row = Math.floor(i / Math.max(cols,1));
+    const col = i % Math.max(cols,1);
+    const order = row + col;
+    btn.style.setProperty('--i', order);
+
     wrap.appendChild(btn);
   });
 
+  // กำหนด stagger ต่อใบ
+  wrap.style.setProperty('--stagger', `${STAGGER_STEP_MS}ms`);
+
+  // เล่น "เข้า" ถ้าระบุ
+  if(opt.withEnter){
+    wrap.classList.add('switch-in');
+    // คำนวณเวลาสูงสุดแบบคร่าว ๆ แล้วลบคลาสออก เพื่อครั้งต่อไปจะเล่นได้อีก
+    const maxOrder = Math.max(...Array.from(wrap.children).map(el => +getComputedStyle(el).getPropertyValue('--i') || 0), 0);
+    const total = (maxOrder * STAGGER_STEP_MS) + 420;
+    setTimeout(()=> wrap.classList.remove('switch-in'), Math.min(total, 1200));
+  }
+
   highlight(currentIndex);
+}
+function computeGridCols(container){
+  const cs = getComputedStyle(document.documentElement);
+  const tileW = parseFloat(cs.getPropertyValue('--tile-w')) || parseFloat(cs.getPropertyValue('--tile-min')) || 110;
+  const gap   = parseFloat(cs.getPropertyValue('--tile-g')) || 10;
+  const fullW = container.clientWidth;
+  return Math.max(1, Math.floor((fullW + gap) / (tileW + gap)));
 }
 
 /* -------------------- PLAYER (no title overlay) -------------------- */
@@ -187,29 +235,23 @@ function play(i, opt={scroll:true}){
   currentIndex = i;
 
   const player = jwplayer('player').setup({
-    // ❌ ไม่ส่ง title เพื่อไม่ให้ OSD เด้ง
     playlist:[{
       image: ch.poster || ch.logo || undefined,
       sources: [buildSource(ch)]
     }],
-
     width:'100%',
     aspectratio:'16:9',
     autostart:true,
     mute:/iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
     preload:'metadata',
     playbackRateControls:true,
-
-    // ✅ ปิดหัวข้อ/คำอธิบายในตัวผู้เล่น
     displaytitle:false,
     displaydescription:false
   });
 
-  // จัดการ autoplay บนมือถือ
   player.once('playAttemptFailed',()=>{ player.setMute(true); player.play(true); });
   player.on('error', e=>console.warn('Player error:', e));
 
-  // แสดงชื่อช่องที่ส่วนหัวแทน
   window.__setNowPlaying(ch.name || '');
   highlight(i);
   try{ localStorage.setItem('lastIndex', String(i)); }catch{}
