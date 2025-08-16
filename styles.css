@@ -1,11 +1,11 @@
-/* ===================== styles.css (final – smaller equal ch-card) ===================== */
+/* ===================== styles.css (final – equal & smaller cards + stagger) ===================== */
 :root{
   --bg:#0c0c0d; --panel:#141516; --panel-2:#101112; --text:#f2f2f2;
   --muted:#a0a7b0; --border:#242628; --maxw:1200px;
 
-  /* ============ Channel card size (fixed & smaller) ============ */
-  --tile-w:104px;     /* fixed width per tile (smaller) */
-  --tile-h:120px;     /* fixed height per tile (smaller) */
+  /* Fixed channel card size (เล็กลงและเท่ากันทุกใบ) */
+  --tile-w:104px;     /* fixed column width */
+  --tile-h:120px;     /* fixed card height */
   --tile-g:10px;      /* gap */
 }
 
@@ -47,11 +47,12 @@ header{
 .now-playing.swap{animation:npFade .24s ease both}
 @keyframes npFade{from{opacity:0;transform:translateY(4px)}to{opacity:.92;transform:none}}
 
-/* Histats (ขวาบนใน header + ย่อบนมือถือ) */
+/* === Histats: ด้านขวาบนภายใน header (ย่อบนมือถือ) === */
 #histats_counter{
   position:absolute; top:4px; right:4px; z-index:30;
   line-height:0; pointer-events:auto;
-  transform:scale(.82); transform-origin:top right;
+  transform:scale(.82);                 /* desktop */
+  transform-origin:top right;
 }
 #histats_counter #histatsC{ position:static !important }
 #histats_counter img{ opacity:.9; filter:drop-shadow(0 1px 2px rgba(0,0,0,.45)) }
@@ -83,7 +84,7 @@ header{
 }
 .tab{position:relative;flex:0 0 auto;cursor:pointer;scroll-snap-align:center;contain:paint;-webkit-tap-highlight-color:transparent}
 
-/* Tab size (คงของเดิม ถ้าต้องย่อเพิ่ม ให้ปรับตรงนี้ได้) */
+/* tab-card (เล็กลง) */
 .tab-card{
   width:clamp(70px,11vw,88px);
   height:clamp(56px,9.8vw,70px);
@@ -117,22 +118,37 @@ header{
 .tab[data-filter="สารคดี"]{--accent:#06b6d4}
 .tab[data-filter="เพลง"]{--accent:#a855f7}
 
-/* ---- Channel Grid (fixed-size tiles -> all equal) ---- */
+/* ---- Channel Grid (fixed-size -> equal tiles) ---- */
 .grid{
   margin-top:10px; display:grid; gap:var(--tile-g);
-  /* fixed width columns, auto-wrapping, centered */
   grid-template-columns: repeat(auto-fill, minmax(var(--tile-w), var(--tile-w)));
-  justify-content:center;
-  align-content:start;
+  justify-content:center; align-content:start;
+
+  /* สำหรับเอฟเฟกต์รวม */
+  --stagger:22ms;
 }
-.grid.fade-in{animation:gridFade .24s ease both}
-@keyframes gridFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  
+/* = เอฟเฟกต์รวมตอนเปลี่ยนหมวด = */
+.grid.switch-out .ch-card{
+  animation: tileOut .16s ease-out forwards;
+  will-change: transform, opacity, filter;
+}
+@keyframes tileOut{
+  from{ opacity:1; transform:scale(1) translateY(0); filter:blur(0px); }
+  to  { opacity:0; transform:scale(.96) translateY(4px); filter:blur(2px); }
+}
+.grid.switch-in .ch-card{
+  opacity:0; transform: translateY(8px) scale(.96); filter: blur(2px);
+  animation: tileIn .34s cubic-bezier(.2,.7,.2,1) forwards;
+  animation-delay: calc(var(--stagger) * var(--i, 0));
+  will-change: transform, opacity, filter;
+}
+@keyframes tileIn{ to{ opacity:1; transform:none; filter:none; } }
+
+.grid.switch-out, .grid.switch-in{ contain: paint; }
 
 /* Channel card (fixed size + smaller) */
-.channel{
-  position:relative; width:var(--tile-w); /* ensure each item matches column width */
-  border-radius:14px; cursor:pointer;
-}
+.channel{ position:relative; width:var(--tile-w); border-radius:14px; cursor:pointer; }
 .channel::after{
   content:"";position:absolute;inset:-6px;border-radius:18px;
   background:radial-gradient(60% 60% at 50% 50%, rgba(255,255,255,.55) 0%, transparent 70%);
@@ -147,7 +163,7 @@ header{
   background:linear-gradient(180deg,var(--panel),var(--panel-2))!important;
   border:1px solid var(--border)!important;
   border-radius:12px;
-  padding:9px 8px 8px;              /* tighter */
+  padding:9px 8px 8px;
   box-shadow:0 6px 16px rgba(0,0,0,.18);
   display:grid; grid-template-rows:1fr auto; gap:6px; place-items:center;
   transition:transform .12s ease,border-color .15s ease,box-shadow .15s ease; overflow:hidden;
@@ -160,17 +176,14 @@ header{
 .channel.active .ch-card{border-color:#fff;box-shadow:0 0 0 1.4px #fff inset, 0 0 14px rgba(255,255,255,.6), 0 0 28px rgba(255,255,255,.32)}
 
 .logo-wrap{
-  width:calc(var(--tile-h)*0.46);
-  height:calc(var(--tile-h)*0.46);
-  border-radius:10px; background:#0e0f10;
-  display:grid; place-items:center; overflow:hidden;
+  width:calc(var(--tile-h)*0.46); height:calc(var(--tile-h)*0.46);
+  border-radius:10px; background:#0e0f10; display:grid; place-items:center; overflow:hidden;
 }
 .logo{
-  max-width:calc(var(--tile-h)*0.40);
-  max-height:calc(var(--tile-h)*0.40);
+  max-width:calc(var(--tile-h)*0.40); max-height:calc(var(--tile-h)*0.40);
 }
 .name{
-  font-size:11.8px;                 /* slightly smaller text */
+  font-size:11.8px;
   text-align:center; color:#e7e7e7;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
   overflow:hidden; text-overflow:ellipsis; line-height:1.2; min-height:2.4em;
@@ -184,30 +197,18 @@ header{
 @media (prefers-reduced-motion:reduce){
   .tab-card{transition:none}
   .tab:hover .tab-card,.tab[aria-selected="true"] .tab-card{transform:none}
-  .grid.fade-in{animation:none}
+  .grid.switch-out .ch-card,.grid.switch-in .ch-card{animation:none}
 }
 
-/* ---------- Responsive tuning (portrait, landscape, desktop) ---------- */
+/* ---------- Responsive tuning ---------- */
 /* Compact desktops & large tablets */
-@media (max-width: 1200px){
-  :root{ --tile-w:100px; --tile-h:116px; }
-}
+@media (max-width: 1200px){ :root{ --tile-w:100px; --tile-h:116px; } }
 /* Tablets / small laptops */
-@media (max-width: 900px){
-  :root{ --tile-w:98px; --tile-h:112px; }
-}
+@media (max-width: 900px){ :root{ --tile-w:98px; --tile-h:112px; } }
 /* Phones (portrait) */
-@media (max-width: 700px){
-  :root{ --tile-w:94px; --tile-h:108px; --tile-g:9px; }
-}
-@media (max-width: 520px){
-  :root{ --tile-w:90px; --tile-h:104px; --tile-g:8px; }
-}
+@media (max-width: 700px){ :root{ --tile-w:94px; --tile-h:108px; --tile-g:9px; } }
+@media (max-width: 520px){ :root{ --tile-w:90px; --tile-h:104px; --tile-g:8px; } }
 /* Very small phones */
-@media (max-width: 390px){
-  :root{ --tile-w:86px; --tile-h:100px; }
-}
-/* Phones in landscape (height is tight) */
-@media (max-height: 420px) and (orientation: landscape){
-  :root{ --tile-h:96px; }
-}
+@media (max-width: 390px){ :root{ --tile-w:86px; --tile-h:100px; } }
+/* Phones landscape (height tight) */
+@media (max-height: 420px) and (orientation: landscape){ :root{ --tile-h:96px; } }
